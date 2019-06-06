@@ -1,1 +1,1 @@
-# eidolon
+# EIDOLON
