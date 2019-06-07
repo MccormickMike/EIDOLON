@@ -17,7 +17,7 @@ o.sampleRate = 48000; //likely 44100 or 48000
 
 // Choose Device
 // o.device = "Scarlett 2i2 USB"
-o.device = "OCTA-CAPTURE"; //the name of your soundcard goes inside the "" as the line above
+// o.device = "OCTA-CAPTURE"; //the name of your soundcard goes inside the "" as the line above
 )
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,15 +42,15 @@ s.waitForBoot({
 
 	s.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "EIDOLON" +/+ "EIDOLON_Data_portfolio.scd").load;
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLON_Data_portfolio.scd").load;
 
 	s.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "EIDOLON" +/+ "EIDOLON_Transforms_portfolio.scd").load;
-
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLON_Transforms_portfolio.scd").load;
+"/Users/mikemccormick/Documents/GitHub/EIDOLON/Program Files/EIDOLON_Data_portfolio.scd"
 	s.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "EIDOLON" +/+ "EIDOLON_OSC_portfolio.scd").load;
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLON_OSC_portfolio.scd").load;
 
 	s.sync;
 
