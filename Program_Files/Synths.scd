@@ -297,10 +297,6 @@ SynthDef(\clicks,{
 	arg freq,feedback,outBus,ts,amp=0.1;
 	var osc,sig,env,pan;
 
-
-	// freq = In.kr(~meanIOIBus).clip(0.1,20);
-	// feedback = In.kr(~specFlatnessBus).clip(1.8,2.5);
-
 	osc = SinOscFB.ar([freq,freq*1.005],feedback);
 	env = EnvGen.kr(Env.new([0.01,1,0.01],[0.05,0.5],\exp),1,timeScale:ts.clip(2,20),doneAction: 2);
 	pan = LinRand(-1,1);
