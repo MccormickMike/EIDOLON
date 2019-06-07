@@ -73,6 +73,3 @@ s.waitForBoot({
 
 // ...AND THIS ONE TO STOP IT
 ~eidolon.stop;
-~memory[0]["events"]
-~recorder
-~buffers[0][0].play
