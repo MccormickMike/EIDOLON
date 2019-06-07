@@ -42,15 +42,15 @@ s.waitForBoot({
 
 	s.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLON_Data_portfolio.scd").load;
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "Dictionaries.scd").load;
 
 	s.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLON_Transforms_portfolio.scd").load;
-"/Users/mikemccormick/Documents/GitHub/EIDOLON/Program Files/EIDOLON_Data_portfolio.scd"
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "Synths.scd").load;
+
 	s.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLON_OSC_portfolio.scd").load;
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "OSCdefs.scd").load;
 
 	s.sync;
 
