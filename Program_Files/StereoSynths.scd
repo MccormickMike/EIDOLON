@@ -75,7 +75,7 @@
 		},
 
 		"tesla" -> {
-			arg carfreq=1.3,modfreq=8000,modFB=3,filt=8000,rq=1,amp=0.05;
+			arg carfreq=1.3,modfreq=8000,modFB=3,filt=8000,rq=1,amp=0.08;
 			var car,mod,sig;
 
 			mod = SinOscFB.ar(modfreq*Dust.ar(LFNoise0.kr(0.3).range(0.2,10)).lag,modFB);
