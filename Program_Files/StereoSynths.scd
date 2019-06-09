@@ -162,7 +162,7 @@ SynthDef(\inPlayer,{
 	sig = Compander.ar(sig,sig,compThresh,1,0.5,0.01,0.01);
 	sig = Pan2.ar(sig,0);
 	Out.ar(analyserOut,Mix(sig));
-	Out.ar(outBus,sig*amp); //CAN COMMENT THIS LINE OUT FOR PERFORMANCE!!
+	Out.ar(outBus,sig*amp);
 
 }).add;
 
