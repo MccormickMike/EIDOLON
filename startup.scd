@@ -69,7 +69,7 @@ s.waitForBoot({
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // STEP 6. EVALUATE THIS LINE TO START THE EIDOLON...
-~eidolon.play; //don't forget to comment out input line in Transforms file!
+~eidolon.play;
 
 // ...AND THIS ONE TO STOP IT
 ~eidolon.stop;
