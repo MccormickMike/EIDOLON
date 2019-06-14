@@ -190,6 +190,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 		if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {(~memory[index]["events"].indicesOfEqual("crawlers") ? 0).asArray.last < 960} and: {current_event == 0} || {Ndef(\tesla).isPlaying.not} and: {recent_silence > 0.85} and: {(~memory[index]["events"].indicesOfEqual("crawlers") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
 			{
 				{3.do({
+					1.0.rrand(5.0).wait;
 					Synth(\clicks,[\ts,(recent_silence + 2) * 10,\freq,current_varianceIOI.clip(0.01,0.3),\feedback,60,\amp,0.1,\outBus,~switcherBus]);
 					8.0.rrand(12.0).wait;
 				})
