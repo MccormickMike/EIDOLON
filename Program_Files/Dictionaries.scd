@@ -2,6 +2,8 @@
 (
 //Allocate Audio and Control Busses
 (
+
+//these can all be put into a large dictionary!!
 ~analyserIn = Array.fill(~numPlayers,{Bus.audio(s,~numChannels)});
 ~switcherBus = Bus.audio(s,~numChannels);
 

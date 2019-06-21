@@ -11,7 +11,7 @@ s = Server.default;
 o = s.options;
 
 o.numInputBusChannels = 10; //match the number of hardware inputs on your soundcard
-o.numOutputBusChannels = 10; //this is a stereo version at the moment
+o.numOutputBusChannels = 10; //match the number of hardware outputs on your soundcard
 o.memSize = 2**20; //don't worry about this too much...just making sure SC has enough memory to do fun things!
 o.sampleRate = 48000; //likely 44100 or 48000
 
@@ -36,7 +36,7 @@ s.waitForBoot({
 	~outBus = 0; // first output channel -1
 	~numPlayers = ~inBus.size;
 	~numChannels = 2; //this is a stereo version...for now
-	~inVolume = 0.1; //between 0.0 and 1.0
+	~inVolume = [0.7]; //between 0.0 and 1.0; volume for clean thru signal
 	~compThresh = [0.5]; //compressor threshold between 0.0 and 1.0 for inputs
 	~compThreshGlobal = 0.5;//compressor threshold between 0.0 and 1.0 for ouput
 
@@ -55,10 +55,13 @@ s.waitForBoot({
 	s.sync;
 
 	~eidolon = Routine({ //inPlayer modules need pan argument - especially for multiple inputs!
+
+		//this should become ~numPlayers.do({})
 		Ndef(\input0,\inPlayer).play(group:~inGroup);
-		Ndef(\input0).set(\amp,~inVolume,\compThresh,~compThresh[0],\inBus,~inBus[0],\analyserOut,~analyserIn[0],\outBus,~switcherBus);
+		Ndef(\input0).set(\amp,~inVolume[0],\compThresh,~compThresh[0],\inBus,~inBus[0],\analyserOut,~analyserIn[0],\outBus,~switcherBus);
 		Ndef(\analyser0,\analyser).play(group:~inGroup);
 		Ndef(\analyser0).set(\inBus,~analyserIn[0],\thresh,~onsetThreshold);
+
 		Ndef(\switcher,\switcher).play;
 		Ndef(\switcher,\switcher).set(\inBus,~switcherBus,\outBus,~globalInBus);
 		Ndef(\globalOut,\globalOut).play;

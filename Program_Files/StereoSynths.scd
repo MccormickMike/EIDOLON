@@ -3,6 +3,7 @@
 (
 ~transforms = ~numPlayers.collect({
 	arg player;
+
 	Dictionary[
 
 		"ringMod" -> {
@@ -281,7 +282,7 @@ SynthDef(\freezeBells,{
 	arg inBus,outBus,amp=0.8;
 	var chain,ramp,rate,sig;
 
-	ramp = Line.ar(-1.0,-0.001,ExpRand(4.0,8.0),doneAction: 2);
+	ramp = Line.ar(-1.0,-0.001,ExpRand(6.0,10.0),doneAction: 2);
 	sig = In.ar(inBus,1);
 	chain = FFT(LocalBuf(1024),sig);
 	chain = PV_Freeze(chain,1);

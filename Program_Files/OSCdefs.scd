@@ -45,7 +45,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 	//determine state!!!!
 	case
 	{current_time < 10}{state = "tacet"}
-	{current_time > 10 and: {current_time < 900}}
+	{current_time > 10 and: {current_time < 2400}}//40 minutes
 	{
 		if(current_time < 180,//180 seconds - 3 minutes
 			{state = "ignore"},
@@ -62,7 +62,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			}
 		);
 	}
-	{current_time > 900}{state = "tacet"};
+	{current_time > 2400}{state = "tacet"};
 
 	state.postln;
 
@@ -85,7 +85,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 
 		~transforms[index].keysDo({arg key; if(Ndef(key.asSymbol).isPlaying,{keyList.add(key)})});
 
-		if(recent_amp >= -28 and: {recent_hasFreq > 0.8} and: {recent_density >= 9} and: {(~memory[0]["events"].indicesOfEqual("ringMod") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
+		if(recent_amp >= -28 and: {recent_hasFreq > 0.8} and: {recent_density >= 9} and: {(~memory[0]["events"].indicesOfEqual("ringMod") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
 			{if(Ndef(\ringMod).isPlaying.not,
 				{Ndef(\ringMod,~transforms[index]["ringMod"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\ringMod).set(\inBus,~analyserIn[index]);
@@ -98,7 +98,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			)}
 		);
 
-		if(recent_amp <= -12 and: {recent_amp >= -24} and: {recent_density <= 5} and: {recent_silence < 0.6} and: {(~memory[index]["events"].indicesOfEqual("comber") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
+		if(recent_amp <= -12 and: {recent_amp >= -24} and: {recent_density <= 5} and: {recent_silence < 0.6} and: {(~memory[index]["events"].indicesOfEqual("comber") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
 			{if(Ndef(\comber).isPlaying.not,
 				{Ndef(\comber,~transforms[index]["comber"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\comber).set(\inBus,~analyserIn[index]);
@@ -111,7 +111,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			)}
 		);
 
-		if(recent_hasFreq > 0.6 and: {recent_density <= 6} and: {recent_amp <= -36} and: {recent_silence < 0.5} and: {Ndef(\ringMod).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("pitchShift") ? 0).asArray.last < 960} and: {keyList.size < 3}and: {current_event == 0},
+		if(recent_hasFreq > 0.6 and: {recent_density <= 6} and: {recent_amp <= -36} and: {recent_silence < 0.5} and: {Ndef(\ringMod).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("pitchShift") ? 0).asArray.last < 1920} and: {keyList.size < 3}and: {current_event == 0},
 			{if(Ndef(\pitchShift).isPlaying.not,
 				{Ndef(\pitchShift,~transforms[index]["pitchShift"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\pitchShift).set(\inBus,~analyserIn[index]);
@@ -124,7 +124,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			)}
 		);
 
-		if(recent_amp >= -30 and: {recent_silence < 0.4} and: {current_density >= 6} and: {recent_varianceIOI < 0.2} and: {Ndef(\percShiftDelay).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("brokenRecord") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
+		if(recent_amp >= -30 and: {recent_silence < 0.4} and: {current_density >= 6} and: {recent_varianceIOI < 0.2} and: {Ndef(\percShiftDelay).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("brokenRecord") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
 			{if(Ndef(\brokenRecord).isPlaying.not,
 				{Ndef(\brokenRecord,~transforms[index]["brokenRecord"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\brokenRecord).set(\inBus,~analyserIn[index]);
@@ -137,7 +137,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			)}
 		);
 
-		if(recent_hasFreq <= 0.3 and: {recent_silence >= 0.2} and: {~memory[index]["past_density"][0..24].maxItem >= 7} and: {recent_centroid >= 1500} and: {(~memory[index]["events"].indicesOfEqual("percShiftDelay") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
+		if(recent_hasFreq <= 0.3 and: {recent_silence >= 0.2} and: {~memory[index]["past_density"][0..24].maxItem >= 7} and: {recent_centroid >= 1500} and: {(~memory[index]["events"].indicesOfEqual("percShiftDelay") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
 			{if(Ndef(\percShiftDelay).isPlaying.not,
 				{Ndef(\percShiftDelay,~transforms[index]["percShiftDelay"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\percShiftDelay).set(\inBus,~analyserIn[index]);
@@ -150,7 +150,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			)}
 		);
 
-		if(current_density <= 3 and: {recent_amp <= -32} and: {~memory[index]["past_amp"][0..24].maxItem <= -24} and: (recent_hasFreq > 0.75) and: {(~memory[index]["events"].indicesOfEqual("snowSines") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
+		if(current_density <= 3 and: {recent_amp <= -32} and: {~memory[index]["past_amp"][0..24].maxItem <= -24} and: (recent_hasFreq > 0.75) and: {(~memory[index]["events"].indicesOfEqual("snowSines") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
 			{
 				{2.do({Synth(\snowSines,[\atk,8.0.rrand(10.0),\rls,8.0.rrand(10.0),\pan,1.0.rand2,\amp,0.02.rrand(0.03),\freq,~memory[index]["past_freq"][..12].asSet.choose,\outBus,~switcherBus]);
 					"snowSines".postln;
@@ -161,21 +161,21 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			}
 		);
 
-		if(~memory[index]["past_amp"][0..24].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {~memory[index]["past_density"][0..24].maxItem <= 5} and: {(~memory[index]["events"].indicesOfEqual("freezeBells") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
+		if(~memory[index]["past_amp"][0..24].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {~memory[index]["past_density"][0..24].maxItem <= 5} and: {(~memory[index]["events"].indicesOfEqual("freezeBells") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
 			{Synth(\freezeBells,[\inBus,~analyserIn[index],\outBus,~switcherBus],Ndef(\input0).nodeID,\addAfter);
 				current_event = "freezeBells";
 				"freezeBells".postln;
 			}
 		);
 
-		if(current_density >= 10 and: {current_centroid > 3000} and: {current_amp >= -18} and: {(~memory[index]["events"].indicesOfEqual("screech") ? 0).asArray.last < 480} and: {keyList.size < 3} and: {current_event == 0},
+		if(current_density >= 10 and: {current_centroid > 3000} and: {current_amp >= -18} and: {(~memory[index]["events"].indicesOfEqual("screech") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
 			{Synth(\screech,[\freq,1000,\amp,0.15.rrand(0.23),\pan,1.0.rand2,\outBus,~switcherBus]);
 				current_event = "screech";
 				"screech".postln;
 			}
 		);
 
-		if(recent_silence > 0.85 and: {(~memory[index]["events"].indicesOfEqual("tesla") ? 0).asArray.last < 960} and: {current_event == 0} || {recent_centroid > 2500 and: {recent_density > 10} and: {recent_varianceIOI > 0.2} and: {(~memory[index]["events"].indicesOfEqual("tesla") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0}},
+		if(recent_silence > 0.85 and: {(~memory[index]["events"].indicesOfEqual("tesla") ? 0).asArray.last < 1920} and: {current_event == 0} || {recent_centroid > 2500 and: {recent_density > 10} and: {recent_varianceIOI > 0.2} and: {(~memory[index]["events"].indicesOfEqual("tesla") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0}},
 			{if(Ndef(\tesla).isPlaying.not,
 				{Ndef(\tesla,~transforms[index]["tesla"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					current_event = "tesla";
@@ -187,7 +187,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			)}
 		);
 
-		if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {(~memory[index]["events"].indicesOfEqual("crawlers") ? 0).asArray.last < 960} and: {current_event == 0} || {Ndef(\tesla).isPlaying.not} and: {recent_silence > 0.85} and: {(~memory[index]["events"].indicesOfEqual("crawlers") ? 0).asArray.last < 960} and: {keyList.size < 3} and: {current_event == 0},
+		if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {(~memory[index]["events"].indicesOfEqual("crawlers") ? 0).asArray.last < 1920} and: {current_event == 0} || {Ndef(\tesla).isPlaying.not} and: {recent_silence > 0.85} and: {(~memory[index]["events"].indicesOfEqual("crawlers") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
 			{
 				{3.do({
 					1.0.rrand(5.0).wait;
@@ -199,10 +199,61 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 				current_event = "crawlers";
 			}
 		);
+
+		if(~recorder[index] > 0 and: {recent_silence >= 0.4} and: {recent_amp <= -24} and: {recent_density <= 5} and: {(~memory[index]["events"].indicesOfEqual("bufGlitch") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
+			{if(Ndef(\bufGlitch).isPlaying.not,
+				{Ndef(\bufGlitch,~bufTransforms[index]["bufGlitch"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(\bufGlitch).set(\bufnum,~recorder[index].rand);
+					current_event = "bufGlitch";
+					"bufGlitch ON".postln},
+			)},
+			{if(Ndef(\bufGlitch).isPlaying and: {~memory[index]["events"].indicesOfEqual("bufGlitch").last > 120},
+				{Ndef(\bufGlitch).end(fadeTime);
+					"bufGlitch OFF".postln}
+			)}
+		);
+
+		if(~recorder[index] > 0 and: {recent_silence > 0.6} and: {recent_amp <= -24} and: {recent_density <= 6} and: {Ndef(\bufGlitch).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("bufStutter") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
+			{if(Ndef(\bufStutter).isPlaying.not,
+				{Ndef(\bufStutter,~bufTransforms[index]["bufStutter"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(\bufStutter).set(\bufnum,~recorder[index].rand);
+					current_event = "bufStutter";
+					"bufStutter ON".postln},
+			)},
+			{if(Ndef(\bufStutter).isPlaying and: {~memory[index]["events"].indicesOfEqual("bufStutter").last > 120},
+				{Ndef(\bufStutter).end(fadeTime);
+					"bufStutter OFF".postln}
+			)}
+		);
+
+		if(~recorder[index] > 0 and: {recent_amp <= -24} and: {recent_hasFreq > 0.6} and: {Ndef(\bufGlitch).isPlaying.not} and: {Ndef(\bufStutter).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("bufAMRing") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
+			{if(Ndef(\bufAMRing).isPlaying.not,
+				{Ndef(\bufAMRing,~bufTransforms[index]["bufAMRing"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(\bufAMRing).set(\bufnum,~recorder[index].rand);
+					current_event = "bufAMRing";
+					"bufAMRing ON".postln},
+			)},
+			{if(Ndef(\bufAMRing).isPlaying and: {~memory[index]["events"].indicesOfEqual("bufAMRing").last > 120},
+				{Ndef(\bufAMRing).end(fadeTime);
+					"bufAMRing OFF".postln}
+			)}
+		);
+
+		if(~recorder[index] > 0 and: {recent_silence > 0.65} and: {recent_density <= 7} and: {Ndef(\bufAMRing).isPlaying.not} and: {Ndef(\bufStutter).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("tGrainz") ? 0).asArray.last < 1920} and: {keyList.size < 3} and: {current_event == 0},
+			{if(Ndef(\tGrainz).isPlaying.not,
+				{Ndef(\tGrainz,~bufTransforms[index]["tGrainz"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(\tGrainz).set(\bufnum,~recorder[index].rand);
+					current_event = "tGrainz";
+					"tGrainz ON".postln},
+			)},
+			{if(Ndef(\tGrainz).isPlaying and: {~memory[index]["events"].indicesOfEqual("tGrainz").last > 120},
+				{Ndef(\tGrainz).end(fadeTime);
+					"tGrainz OFF".postln}
+			)}
+		);
 	}
 
-
-	{state == "contrast"}{} //gotta figure this out!
+	//{state == "contrast"}{} //gotta figure this out!
 
 	{state == "ignore"}
 	{
@@ -240,58 +291,6 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 		current_event = 0;
 
 	};
-
-	if(~recorder[index] > 0 and: {recent_silence >= 0.4} and: {recent_amp <= -24} and: {recent_density <= 5} and: {(~memory[index]["events"].indicesOfEqual("bufGlitch") ? 0).asArray.last < 960} and: {current_event == 0},
-		{if(Ndef(\bufGlitch).isPlaying.not,
-			{Ndef(\bufGlitch,~bufTransforms[index]["bufGlitch"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-				Ndef(\bufGlitch).set(\bufnum,~recorder[index].rand);
-				current_event = "bufGlitch";
-				"bufGlitch ON".postln},
-		)},
-		{if(Ndef(\bufGlitch).isPlaying and: {~memory[index]["events"].indicesOfEqual("bufGlitch").last > 120},
-			{Ndef(\bufGlitch).end(fadeTime);
-				"bufGlitch OFF".postln}
-		)}
-	);
-
-	if(~recorder[index] > 0 and: {recent_silence > 0.6} and: {recent_amp <= -24} and: {recent_density <= 6} and: {Ndef(\bufGlitch).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("bufStutter") ? 0).asArray.last < 960} and: {current_event == 0},
-		{if(Ndef(\bufStutter).isPlaying.not,
-			{Ndef(\bufStutter,~bufTransforms[index]["bufStutter"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-				Ndef(\bufStutter).set(\bufnum,~recorder[index].rand);
-				current_event = "bufStutter";
-				"bufStutter ON".postln},
-		)},
-		{if(Ndef(\bufStutter).isPlaying and: {~memory[index]["events"].indicesOfEqual("bufStutter").last > 120},
-			{Ndef(\bufStutter).end(fadeTime);
-				"bufStutter OFF".postln}
-		)}
-	);
-
-	if(~recorder[index] > 0 and: {recent_amp <= -24} and: {recent_hasFreq > 0.6} and: {Ndef(\bufGlitch).isPlaying.not} and: {Ndef(\bufStutter).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("bufAMRing") ? 0).asArray.last < 960} and: {current_event == 0},
-		{if(Ndef(\bufAMRing).isPlaying.not,
-			{Ndef(\bufAMRing,~bufTransforms[index]["bufAMRing"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-				Ndef(\bufAMRing).set(\bufnum,~recorder[index].rand);
-				current_event = "bufAMRing";
-				"bufAMRing ON".postln},
-		)},
-		{if(Ndef(\bufAMRing).isPlaying and: {~memory[index]["events"].indicesOfEqual("bufAMRing").last > 120},
-			{Ndef(\bufAMRing).end(fadeTime);
-				"bufAMRing OFF".postln}
-		)}
-	);
-
-	if(~recorder[index] > 0 and: {recent_silence > 0.65} and: {recent_density <= 7} and: {Ndef(\bufAMRing).isPlaying.not} and: {Ndef(\bufStutter).isPlaying.not} and: {(~memory[index]["events"].indicesOfEqual("tGrainz") ? 0).asArray.last < 960} and: {current_event == 0},
-		{if(Ndef(\tGrainz).isPlaying.not,
-			{Ndef(\tGrainz,~bufTransforms[index]["tGrainz"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-				Ndef(\tGrainz).set(\bufnum,~recorder[index].rand);
-				current_event = "tGrainz";
-				"tGrainz ON".postln},
-		)},
-		{if(Ndef(\tGrainz).isPlaying and: {~memory[index]["events"].indicesOfEqual("tGrainz").last > 120},
-			{Ndef(\tGrainz).end(fadeTime);
-				"tGrainz OFF".postln}
-		)}
-	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//buffer recording
