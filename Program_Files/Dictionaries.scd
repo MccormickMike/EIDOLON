@@ -41,7 +41,7 @@ Dictionary.with(*[
 );
 
 //Allocate buffers for recording
-~buffers = {Array.fill(8,{Buffer.alloc(s, s.sampleRate * 8, 1)})} ! ~numPlayers;
+~buffers = {Array.fill(8,{Buffer.alloc(s, s.sampleRate * 12, 1)})} ! ~numPlayers;
 
 //groups
 (
@@ -85,6 +85,23 @@ Dictionary.with(*[
 	"events" -> List()
 ])
 );
+
+//synth Key dictionaries
+/*(
+~synthKeys = ~numPlayers.collect({
+	arg playerIndex;
+
+	Dictionary[
+
+		"percSynthKeys" -> ~transforms[playerIndex]["densePerc"].keys.asArray.scramble,
+		"pitchSynthKeys" -> ~transforms[playerIndex]["pitchTrack"].keys.asArray.scramble,
+		"silenceSynthKeys" -> ~transforms[playerIndex]["fillSilence"].keys.asArray.scramble,
+		"bufferSynthKeys" -> ~bufTransforms[playerIndex].keys.asArray.scramble,
+
+
+	]
+})
+);*/
 
 ~recorder = Array.fill(~numPlayers,0);
 

@@ -130,6 +130,7 @@
 			mod = LFPulse.ar(modfreq*LFNoise2.kr(2).range(0.2,2.0),0,LFNoise0.ar(4).range(0.3,0.8)).abs;
 			sig = car*mod.lag;
 			sig = sig * SinOsc.ar(ringfreq);
+			sig = BHiShelf.ar(sig,6000,0.5,-6);
 			sig = Pan2.ar(sig,LFNoise2.kr(0.2));
 		},
 
@@ -282,7 +283,7 @@ SynthDef(\freezeBells,{
 	arg inBus,outBus,amp=0.8;
 	var chain,ramp,rate,sig;
 
-	ramp = Line.ar(-1.0,-0.001,ExpRand(6.0,10.0),doneAction: 2);
+	ramp = Line.ar(-1.0,-0.001,ExpRand(8.0,14.0),doneAction: 2);
 	sig = In.ar(inBus,1);
 	chain = FFT(LocalBuf(1024),sig);
 	chain = PV_Freeze(chain,1);

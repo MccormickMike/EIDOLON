@@ -17,7 +17,7 @@ o.sampleRate = 48000; //likely 44100 or 48000
 
 // Choose Device
 // o.device = "Scarlett 2i2 USB"
-// o.device = "OCTA-CAPTURE"; //the name of your soundcard goes inside the "" as the line above
+o.device = "OCTA-CAPTURE"; //the name of your soundcard goes inside the "" as the line above
 )
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,14 +31,14 @@ s.freeAll;
 
 s.waitForBoot({
 
-	~onsetThreshold = 0.12; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
+	~onsetThreshold = 0.15; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
 	~inBus = [0];//input channel -1
 	~outBus = 0; // first output channel -1
 	~numPlayers = ~inBus.size;
 	~numChannels = 2; //this is a stereo version...for now
-	~inVolume = [0.7]; //between 0.0 and 1.0; volume for clean thru signal
+	~inVolume = [0.9]; //between 0.0 and 1.0; volume for clean thru signal
 	~compThresh = [0.5]; //compressor threshold between 0.0 and 1.0 for inputs
-	~compThreshGlobal = 0.5;//compressor threshold between 0.0 and 1.0 for ouput
+	~compThreshGlobal = 0.45;//compressor threshold between 0.0 and 1.0 for ouput
 
 	s.sync;
 
@@ -46,7 +46,7 @@ s.waitForBoot({
 
 	s.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "Synths.scd").load;
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "StereoSynths.scd").load;
 
 	s.sync;
 
@@ -74,5 +74,8 @@ s.waitForBoot({
 // STEP 6. EVALUATE THIS LINE TO START THE EIDOLON...
 ~eidolon.play;
 
+//remove the new!!!
+
 // ...AND THIS ONE TO STOP IT
 ~eidolon.stop;
+//get data from Mascha's Performance!!!
