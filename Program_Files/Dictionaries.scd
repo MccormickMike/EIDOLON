@@ -41,7 +41,7 @@ Dictionary.with(*[
 );
 
 //Allocate buffers for recording
-~buffers = {Array.fill(8,{Buffer.alloc(s, s.sampleRate * 12, 1)})} ! ~numPlayers;
+~buffers = {Array.fill(12,{Buffer.alloc(s, s.sampleRate * 12, 1)})} ! ~numPlayers;
 
 //groups
 (

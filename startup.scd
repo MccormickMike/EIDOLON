@@ -31,12 +31,13 @@ s.freeAll;
 
 s.waitForBoot({
 
-	~onsetThreshold = 0.15; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
+	~onsetThreshold = 0.13; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
 	~inBus = [0];//input channel -1
 	~outBus = 0; // first output channel -1
+	~performanceLength = 1380; //in seconds
 	~numPlayers = ~inBus.size;
 	~numChannels = 2; //this is a stereo version...for now
-	~inVolume = [0.9]; //between 0.0 and 1.0; volume for clean thru signal
+	~inVolume = [0.7]; //between 0.0 and 1.0; volume for clean thru signal
 	~compThresh = [0.5]; //compressor threshold between 0.0 and 1.0 for inputs
 	~compThreshGlobal = 0.45;//compressor threshold between 0.0 and 1.0 for ouput
 
@@ -72,7 +73,7 @@ s.waitForBoot({
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // STEP 6. EVALUATE THIS LINE TO START THE EIDOLON...
-~eidolon.play;
+~eidolon.play; //RECORD
 
 //remove the new!!!
 

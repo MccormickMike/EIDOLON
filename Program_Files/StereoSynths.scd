@@ -75,8 +75,22 @@
 			sig = Pan2.ar(sig,TRand.kr(-1.0,1.0,1-hasFreq).lag(maxDev),amp);
 		},
 
+		"fftFreeze" -> {
+			arg inBus,amp=1.0;
+			var chain,trig,env,sig;
+			var frames=4096;
+
+			sig = In.ar(inBus,1);
+			trig = In.kr(~onsetsBus) + (1 - In.kr(~hasFreqBus));
+			trig = Trig.kr(trig,TRand.kr(0.3,0.5,trig));
+			chain = FFT(LocalBuf(frames), sig, 0.5, 0, 1, frames);
+			chain = PV_Freeze(chain,trig);
+			sig = IFFT(chain);
+			sig = Pan2.ar(sig*trig,TRand.kr(-1.0,1.0,trig),amp);
+		},
+
 		"tesla" -> {
-			arg carfreq=1.3,modfreq=8000,modFB=3,filt=8000,rq=1,amp=0.08;
+			arg carfreq=1.3,modfreq=8000,modFB=3,filt=8000,rq=1,amp=0.09;
 			var car,mod,sig;
 
 			mod = SinOscFB.ar(modfreq*Dust.ar(LFNoise0.kr(0.3).range(0.2,10)).lag,modFB);
@@ -136,12 +150,12 @@
 
 		"tGrainz" -> {
 			arg bufnum,amp=0.8;
-			var sig,rate,trig,pointer,posDif=0.5,posLo,posDev=0.03,bufSection,bufDur,grainDur=1.2;
+			var sig,rate,trig,pointer,posDif=0.5,posLo,posDev=0.03,bufSection,bufDur,grainDur=0.8;
 
-			trig = In.kr(~silenceBus);
-			rate = Latch.kr(In.kr(~specFlatnessBus),trig);
+			trig = PulseDivider.kr(In.kr(~silenceBus),5);
+			rate = Latch.kr(In.kr(~meanIOIBus),trig);
 			bufDur = BufDur.kr(bufnum);
-			posLo = TRand.kr(0.0,0.5,In.kr(~hasFreqBus));
+			posLo = TRand.kr(0.0,0.5,trig);
 			bufSection = bufDur * posDif;
 			pointer = posLo * bufDur +
 			(Phasor.ar(trig, BufRateScale.kr(bufnum) / SampleRate.ir,posLo * bufDur,(posLo + posDif) * bufDur)
@@ -293,6 +307,23 @@ SynthDef(\freezeBells,{
 	sig = Splay.ar(sig*ramp.abs,ramp.abs.reciprocal/1000,amp);
 	sig = Out.ar(outBus,sig);
 
+}).add;
+
+SynthDef(\blasterDelay,{
+	arg inBus,trig=1,rate,speed,amp=1.0,outBus;
+	var sig,chain,gate;
+
+	rate = Select.kr(rate.round(1),[2/3,6/7,7/8,3/2,7/6,8/7]);
+	gate = EnvGen.ar(Env.perc(0.001,0.999),trig);
+	sig = In.ar(inBus,1);
+	sig = (sig*gate) + LocalIn.ar(1);
+	sig = PitchShift.ar(sig,1,rate,0,0.05);
+	sig = DelayC.ar(sig,0.08,speed.clip(0.01,0.08));
+	LocalOut.ar(sig);
+	sig = LeakDC.ar(sig);
+	sig = Pan2.ar(sig,0,amp);
+	DetectSilence.ar(sig,0.01,doneAction: 2);
+	Out.ar(outBus,sig);
 }).add;
 
 SynthDef(\clicks,{
