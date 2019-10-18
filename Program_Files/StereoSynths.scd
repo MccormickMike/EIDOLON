@@ -2,7 +2,7 @@
 (
 (
 ~transforms = ~numPlayers.collect({
-	arg player;
+	arg player; //this should be changed to playerIndex perhaps? and should be integrated/concatenated into UgenGraph strings
 
 	Dictionary[
 
@@ -105,7 +105,8 @@
 });
 
 ~bufTransforms = ~numPlayers.collect({
-	arg player;
+	arg player; //this should be changed to playerIndex perhaps? and should be integrated/concatenated into UgenGraph strings
+
 	Dictionary[
 		"bufGlitch" -> {
 			arg bufnum;
@@ -200,6 +201,12 @@ SynthDef(\analyser, {
 	trig = Impulse.kr(4);
 
 	SendReply.kr(trig, '/analysis', [amp,silence,freq,hasFreq,onsets,centroid,specFlatness,density,meanIOI,varianceIOI,time]);
+
+	// can these out Busses be organized into an array?
+	// Out.kr([~ampBus,~silenceBus,~freqBus,~hasFreqBus],[amp,silence,freq,hasFreq,etc.])
+	// this will also change as the control Busses will become a Dictionary in the next version of EIDOLON
+	// perhaps a fuction that iterates over the entries of the Dictionary with the arguments? Will be a little hairy with strings...
+
 	Out.kr(~ampBus,amp);
 	Out.kr(~silenceBus,silence);
 	Out.kr(~freqBus,freq);
@@ -243,6 +250,7 @@ SynthDef(\globalOut,{
 	SendReply.kr(trig, '/globalAnalysis', [amp,silence,freq,hasFreq,onsets,centroid,specFlatness,density,meanIOI,varianceIOI,time]);
 
 	in = Compander.ar(in,in,compThresh,1,0.5,0.01,0.01);
+	in = Limiter.ar(in);
 	Out.ar(outBus,in);
 
 }).add;

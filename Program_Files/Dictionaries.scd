@@ -3,7 +3,7 @@
 //Allocate Audio and Control Busses
 (
 
-//these can all be put into a large dictionary!!
+//these can all be put into a large dictionary ! ~numPlayers
 ~analyserIn = Array.fill(~numPlayers,{Bus.audio(s,~numChannels)});
 ~switcherBus = Bus.audio(s,~numChannels);
 
@@ -86,7 +86,7 @@ Dictionary.with(*[
 ])
 );
 
-//synth Key dictionaries
+//synth Key dictionaries -> EIDOLON 2.0
 /*(
 ~synthKeys = ~numPlayers.collect({
 	arg playerIndex;

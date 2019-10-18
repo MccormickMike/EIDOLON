@@ -50,10 +50,10 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 	//determine state!!!!
 
 	case
-	{current_time < 30}{state = "tacet"}
-	{current_time > 30 and: {current_time < ~performanceLength}} //40 minutes
+	{current_time < 20}{state = "tacet"}
+	{current_time > 20 and: {current_time < ~performanceLength}} //40 minutes
 	{
-		if(current_time < 150, //120 seconds - 2 minutes
+		if(current_time < 120, //120 seconds - 2 minutes
 			{state = "ignore"},
 			{
 				if((~memory[index]["state"].indicesOfEqual(~memory[index]["state"][0])? 0).asArray.last % 600 == 599,//determines state length = 2.5 minutes
@@ -88,7 +88,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 	case
 	{state == "support"}
 	{
-		if(recent_amp >= -28 and: {recent_hasFreq > 0.8} and: {recent_density >= 9} and: {current_time > (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},
+		if(recent_amp >= -28 and: {recent_hasFreq > 0.8} and: {recent_density >= 9} and: {current_time < (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},
 			{if(Ndef(\ringMod).isPlaying.not,
 				{Ndef(\ringMod,~transforms[index]["ringMod"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\ringMod).set(\inBus,~analyserIn[index]);
@@ -101,7 +101,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			)}
 		);
 
-		if(recent_amp <= -12 and: {recent_amp >= -24} and: {recent_density <= 5} and: {recent_silence < 0.6} and: {current_time > (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},
+		if(recent_amp <= -12 and: {recent_amp >= -24} and: {recent_density <= 5} and: {recent_silence < 0.6} and: {current_time < (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},
 			{if(Ndef(\comber).isPlaying.not,
 				{Ndef(\comber,~transforms[index]["comber"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\comber).set(\inBus,~analyserIn[index]);
@@ -114,7 +114,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			)}
 		);
 
-		if(recent_hasFreq > 0.6 and: {recent_density <= 7} and: {recent_amp <= -24} and: {recent_silence < 0.4} and: {Ndef(\ringMod).isPlaying.not} and: {current_time < (~performanceLength/2)} and: {keyList.size < 3}and: {current_event == 0},
+		if(recent_hasFreq > 0.6 and: {recent_density <= 7} and: {recent_amp <= -24} and: {recent_silence < 0.4} and: {Ndef(\ringMod).isPlaying.not} and: {current_time > (~performanceLength/2)} and: {keyList.size < 3}and: {current_event == 0},
 			{if(Ndef(\pitchShift).isPlaying.not,
 				{Ndef(\pitchShift,~transforms[index]["pitchShift"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\pitchShift).set(\inBus,~analyserIn[index]);
@@ -168,7 +168,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 
 		if(current_density <= 3 and: {recent_amp <= -28} and: (recent_hasFreq > 0.75) and: {current_time > (~performanceLength/2)} and: {current_event == 0},
 			{
-				{3.do({Synth(\snowSines,[\atk,8.0.rrand(10.0),\rls,8.0.rrand(10.0),\pan,1.0.rand2,\amp,0.02.rrand(0.03),\freq,~memory[index]["past_freq"][..12].asSet.choose,\outBus,~switcherBus]);
+				{2.do({Synth(\snowSines,[\atk,8.0.rrand(10.0),\rls,8.0.rrand(10.0),\pan,1.0.rand2,\amp,0.02.rrand(0.03),\freq,~memory[index]["past_freq"][..24].asSet.choose,\outBus,~switcherBus]);
 					"snowSines".postln;
 					10.0.rrand(13.0).wait;
 				})
@@ -185,14 +185,14 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 		);
 
 		if(current_freq < 1000 and: {current_hasFreq == 1} and: {~memory[index]["past_hasFreq"][0..7].mean > 0.8} and: {recent_silence > 0.6} and: {current_time > (~performanceLength/3)} and: {keyList.size < 3} and: {current_event == 0},
-			{Synth(\blasterDelay,[\inBus,~analyserIn[index],\rate,3.rrand(5),\speed,current_specFlatness,\outBus,~switcherBus],Ndef(\input0).nodeID,\addAfter);
+			{Synth(\blasterDelay,[\inBus,~analyserIn[index],\rate,3.rrand(5),\speed,current_specFlatness,\outBus,~switcherBus],Ndef(\input0).nodeID,\addAfter); //fix this!! \input0 is sloppy!!!!!
 				current_event = "blasterDelayUp";
 				"blasterDelayUp".postln;
 			}
 		);
 
-		if(current_freq > 1000 and: {current_hasFreq == 1} and: {~memory[index]["past_hasFreq"][0..7].mean > 0.8} and: {recent_silence > 0.6} and: {current_time > (~performanceLength/3)} and: {keyList.size < 3} and: {current_event == 0},
-			{Synth(\blasterDelay,[\inBus,~analyserIn[index],\rate,3.rand,\speed,current_specFlatness,\outBus,~switcherBus],Ndef(\input0).nodeID,\addAfter);
+		if(current_freq > 1000 and: {current_hasFreq == 1} and: {~memory[index]["past_hasFreq"][0..7].mean > 0.8} and: {recent_silence > 0.6} and: {current_time < (~performanceLength/3)} and: {keyList.size < 3} and: {current_event == 0},
+			{Synth(\blasterDelay,[\inBus,~analyserIn[index],\rate,3.rand,\speed,current_specFlatness,\outBus,~switcherBus],Ndef(\input0).nodeID,\addAfter); //fix this!! \input0 is sloppy!!!!!
 				current_event = "blasterDelayDown";
 				"blasterDelayDown".postln;
 			}
@@ -230,7 +230,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			}
 		);
 
-		if(~recorder[index] > 0 and: {recent_silence >= 0.45} and: {recent_amp <= -24} and: {recent_density <= 5} and: {current_time > (~performanceLength/3)} and: {current_time < (~performanceLength * 2/3)} and: {current_event == 0},
+		if(~recorder[index] > 0 and: {recent_silence >= 0.45} and: {recent_amp <= -24} and: {recent_density <= 7} and: {current_time > (~performanceLength/3)} and: {current_time < (~performanceLength * 2/3)} and: {current_event == 0},
 			{if(Ndef(\bufGlitch).isPlaying.not,
 				{Ndef(\bufGlitch,~bufTransforms[index]["bufGlitch"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					Ndef(\bufGlitch).set(\bufnum,~buffers[index][~recorder[index].rand]);
@@ -331,7 +331,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//buffer recording
 
-	if(current_time > 10 and: {recent_density > 7} and: {recent_amp > -25} and: {~recorder[index] < 12},{
+	if(current_time > 60 and: {recent_density > 7} and: {recent_amp > -25} and: {~recorder[index] < 12},{
 		case
 		{~recorder[index] < 1}{
 			Synth(\recorder,[\inBus,~analyserIn[index],\bufnum,(~buffers[index][~recorder[index]]).bufnum],Ndef(\input0).nodeID,\addAfter);

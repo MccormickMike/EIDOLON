@@ -45,8 +45,8 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 	//determine state!!!!
 
 	case
-	{current_time < 30}{state = "support"}//tacet
-/*	{current_time > 30 and: {current_time < 2400}}//40 minutes
+	{current_time < 30}{state = "support"} //tacet
+/*	{current_time > 30 and: {current_time < 2400}} //40 minutes
 	{
 		if(current_time < 150,//120 seconds - 2 minutes
 			{state = "ignore"},
@@ -90,11 +90,8 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			})
 		});
 
-		//{keyList.size < 3}
-
-
 		case
-		{current_time.round % 5 == 3}//"densePerc"
+		{current_time.round % 5 == 3} //"densePerc"
 		{var key = ~synthKeys[index]["percSynthKeys"][0];
 
 			if(keyList.size < 3,
@@ -142,7 +139,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 				)}
 			);
 		}
-		{~recorder[index] > 0} //"bufTransforms"
+		{~recorder[index] > 0 /* and silence == 1 or something...other parameters go here*/} //"bufTransforms"
 		{var key = ~synthKeys[index]["bufferSynthKeys"][0];
 
 			if(keyList.size < 3,
@@ -225,7 +222,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//buffer recording
 
-	if(current_time > 10 and: {recent_density > 7} and: {recent_amp > -25} and: {~recorder[index] < 8},{
+	if(current_time > 10 and: {recent_density > 7} and: {recent_amp > -25} and: {~recorder[index] < 8},{ //the current_time value should also be linked to the startTime variable??
 		case
 		{~recorder[index] < 1}{ //must make the Ndef symbol name ++ index
 			Synth(\recorder,[\inBus,~analyserIn[index],\bufnum,(~buffers[index][~recorder[index]]).bufnum],Ndef(\input0).nodeID,\addAfter);
