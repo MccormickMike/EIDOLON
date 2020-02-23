@@ -33,21 +33,6 @@ s.waitForBoot({
 
 	~onsetThreshold = 0.13; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
 
-
-	// in new  version of EIDOLON, frequency of the SendReply trigger can be an environment variable, and can be added to the OSC defs
-	// to allow for the same amount of time to pass with different trigger rates.
-	// example:
-	// if(~memory[index]["state"].indicesOfEqual("tacet").asArray.last == 4,... BECOMES
-	// if(~memory[index]["state"].indicesOfEqual("tacet").asArray.last == ~trigRate * 4 (or whatever)
-	// so that it always equals the same amount of seconds, but the trigRate can be an argument modulatable in the startup screen
-	//  YES!!!
-
-	// also, waitBeforeStartTime should be an environment variable as well, so that buffer recording is not accidentally triggered before the player has started, etc.
-
-	// need to wrap the OSCdef in a ~numPlayers.do function, and pass the index as an argumemt
-	// then, need to add "++ index" to all the Ndef keys so that they are assigned to the right channel/player
-
-
 	//needs also to be an array
 	~inBus = [0];//input channel -1
 	~outBus = 0; // first output channel -1

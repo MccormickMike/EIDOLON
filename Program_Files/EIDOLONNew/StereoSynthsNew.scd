@@ -5,6 +5,9 @@
 
 	Dictionary[
 
+		// use the event type syntax (brokenRecord: {function}) instead of Dictionaries within Dictionaries
+		// check the help file for Event Type and NodeProxy to make sure it doesn't do some weird shit...
+
 		"densePerc" -> Dictionary
 		[
 			"brokenRecord" -> {

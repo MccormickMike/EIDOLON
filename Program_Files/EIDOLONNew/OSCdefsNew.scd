@@ -4,9 +4,9 @@
 //////////////////////////////////////////INDIVIDUAL ANALYSER///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 (
-OSCdef(\listener0, {
+OSCdef(\listener0, { //Make into a ~numplayers.do statement!!!!!
 	arg msg;
-	var index = 0; //Makesx into a .do statement!!!!!
+	var index = 0; //Make into a ~numplayers.do statement!!!!!
 	var current_amp = msg[3].ampdb;
 	var recent_amp = ~memory[index]["past_amp"][0..24].median;
 	var current_silence = msg[4];
@@ -225,7 +225,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 	if(current_time > 10 and: {recent_density > 7} and: {recent_amp > -25} and: {~recorder[index] < 8},{ //the current_time value should also be linked to the startTime variable??
 		case
 		{~recorder[index] < 1}{ //must make the Ndef symbol name ++ index
-			Synth(\recorder,[\inBus,~analyserIn[index],\bufnum,(~buffers[index][~recorder[index]]).bufnum],Ndef(\input0).nodeID,\addAfter);
+			Synth(\recorder,[\inBus,~analyserIn[index],\bufnum,(~buffers[index][~recorder[index]]).bufnum],Ndef(\input0).nodeID,\addAfter); //pass index into the Ndef key!!!!!
 			buffer_event = "bufRec";
 			"Buffer % full".format(~recorder[index]).postln;
 			~recorder[index] = (~recorder[index] + 1);
@@ -233,7 +233,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 		}
 		{~recorder[index] >= 1}{
 			if((~memory[index]["bufferEvents"].indicesOfEqual("bufRec") ? 0).asArray.first > 120,{ //at least two minutes between recordings...
-				Synth(\recorder,[\inBus,~analyserIn[index],\bufnum,(~buffers[index][~recorder[index]]).bufnum],Ndef(\input0).nodeID,\addAfter);
+				Synth(\recorder,[\inBus,~analyserIn[index],\bufnum,(~buffers[index][~recorder[index]]).bufnum],Ndef(\input0).nodeID,\addAfter); //pass index into the Ndef key!!!!!
 				buffer_event = "bufRec";
 				"Buffer % full".format(~recorder[index]).postln;
 				~recorder[index] = (~recorder[index] + 1);
