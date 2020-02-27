@@ -205,7 +205,7 @@ current_time: %".format(index,current_amp,recent_amp,current_silence,recent_sile
 			}
 		);
 
-		if(recent_silence > 0.9 and: {current_time > (~performanceLength/2)} and: {current_event == 0} || {recent_centroid > 2500 and: {recent_density > 10} and: {recent_varianceIOI > 0.2} and: {current_time > (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0}},
+		if(recent_silence > 0.9 and: {current_time > (~performanceLength/2)} and: {current_event == 0} || {recent_centroid > 2500} and: {recent_density > 10} and: {recent_varianceIOI > 0.2} and: {current_time > (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0}},
 			{if(Ndef(\tesla).isPlaying.not,
 				{Ndef(\tesla,~transforms[index]["tesla"]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
 					current_event = "tesla";

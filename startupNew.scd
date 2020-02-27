@@ -27,7 +27,6 @@ s.waitForBoot({
 
 	~onsetThreshold = [0.13]; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
 
-
 	// in new  version of EIDOLON, frequency of the SendReply trigger can be an environment variable, and can be added to the OSC defs
 	// to allow for the same amount of time to pass with different trigger rates.
 	// example:
@@ -38,34 +37,46 @@ s.waitForBoot({
 
 	// also, waitBeforeStartTime should be an environment variable as well, so that buffer recording is not accidentally triggered before the player has started, etc.
 
-	// need to wrap the OSCdef in a ~numPlayers.do function, and pass the index as an argumemt
 	// then, need to add "++ index" to all the Ndef keys so that they are assigned to the right channel/player
 
 
 	//needs also to be an array
-	~inBus = [0];//input channel -1
-	~outBus = 0; // first output channel -1
+	~inBus = [0];
+	~outBus = 0;
 	~performanceLength = 600; //in seconds
 	~numPlayers = ~inBus.size;
-	~numChannels = 2; //this is a stereo version...for now
+	~numChannels = 2;
+	~orientation = 0.5; // 0 if center front, 0.5, if bisecting a  vertex
+	~pan = [0]; // if using a center front speaker, must change the width to 3 speakers?
 	~inVolume = [0.5]; //between 0.0 and 1.0; volume for clean thru signal
 	//have to figure out a way to get output volume through Global output, but not to PA output...another argument!!
 
 
+	~waitBeforeStartTime = 1; //in seconds
 
-	// make this into an event, like for each of the players
+	// make this into an event, as in profiles for each of the players
 
 	//can gain high and then compress hard (lower threshold)
 	~compThresh = [0.5]; //compressor threshold between 0.0 and 1.0 for inputs
 	~compThreshGlobal = 0.5;//compressor threshold between 0.0 and 1.0 for ouput
 
-	s.sync;
-
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files"+/+ "EIDOLONNew" +/+ "StereoSynthsNew.scd").load;
 
 	s.sync;
 
 	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLONNew" +/+ "DictionariesNew.scd").load;
+
+	s.sync;
+
+	if(~numChannels < 3,{
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files"+/+ "EIDOLONNew" +/+ "StereoSynthsNew.scd").load;
+	},{
+		(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files"+/+ "EIDOLONNew" +/+ "MultiChannelSynthsNew.scd").load;
+
+	});
+
+	s.sync;
+
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLONNew" +/+ "SynthKeysNew.scd").load; // when/if busses are passed as arguments to the synths, this dictionaries can go into the Dictionaries File
 
 	s.sync;
 
@@ -79,9 +90,9 @@ s.waitForBoot({
 			arg playerIndex;
 
 			Ndef("input%".format(playerIndex).asSymbol,\inPlayer).play(group:~inGroup);
-			Ndef("input%".format(playerIndex).asSymbol).set(\amp,~inVolume[0],\compThresh,~compThresh[playerIndex],\inBus,~inBus[playerIndex],\analyserOut,~analyserIn[playerIndex],\outBus,~switcherBus);
-			Ndef("analysert%".format(playerIndex).asSymbol,\analyser).play(group:~inGroup);
-			Ndef("analysert%".format(playerIndex).asSymbol).set(\inBus,~analyserIn[playerIndex],\thresh,~onsetThreshold[playerIndex]);
+			Ndef("input%".format(playerIndex).asSymbol).set(\amp,~inVolume[playerIndex],\compThresh,~compThresh[playerIndex],\pan,~pan[playerIndex],\inBus,~inBus[playerIndex],\analyserOut,~analyserIn[playerIndex],\outBus,~switcherBus);
+			Ndef("analyser%".format(playerIndex).asSymbol,\analyser).play(group:~inGroup);
+			Ndef("analyser%".format(playerIndex).asSymbol).set(\inBus,~analyserIn[playerIndex],\thresh,~onsetThreshold[playerIndex]);
 		});
 
 		Ndef(\switcher,\switcher).play;
@@ -105,3 +116,5 @@ s.record(numChannels: ~numChannels)
 
 // ...AND THIS ONE TO STOP IT
 ~eidolon.stop;
+
+

@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////EIDOLON//////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////EIDOLON Dictionaries//////////////////////////////////////////////////////////////////////
 (
 //Allocate Audio and Control Busses
 (
@@ -37,7 +37,6 @@ Dictionary.with(*[
 ])
 } ! ~numPlayers;
 */
-
 );
 
 //Allocate buffers for recording
@@ -84,20 +83,6 @@ Dictionary.with(*[
 
 	"events" -> List()
 ])
-);
-
-(
-~synthKeys = ~numPlayers.collect({
-	arg playerIndex;
-
-	Dictionary[
-
-		"percSynthKeys" -> ~transforms[playerIndex]["densePerc"].keys.asArray.scramble,
-		"pitchSynthKeys" -> ~transforms[playerIndex]["pitchTrack"].keys.asArray.scramble,
-		"silenceSynthKeys" -> ~transforms[playerIndex]["fillSilence"].keys.asArray.scramble,
-		"bufferSynthKeys" -> ~bufTransforms[playerIndex].keys.asArray.scramble,
-	]
-})
 );
 
 ~recorder = Array.fill(~numPlayers,0);

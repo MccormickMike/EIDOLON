@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////EIDOLON Stereo Synths//////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////EIDOLON MultiChannel Synths//////////////////////////////////////////////////////////////////////
 (
 (
 ~transforms = Dictionary[
@@ -19,7 +19,7 @@
 			rand = TExpRand.kr(0.05,0.3,rand);
 			sig = CombC.ar(sig*gate,0.6,rand,Select.kr(Trig1.kr(trig,rand-0.01),[inf,0]));
 			sig1 = DelayN.ar(sig,0.6,rand*7/5);
-			sig = Pan2.ar(sig,LFNoise2.kr(0.2)) + Pan2.ar(sig1,LFNoise2.kr(0.2));
+			sig = PanAz.ar(~numChannels,sig,LFNoise2.kr(0.2),amp,2,~orientation) + PanAz.ar(~numChannels,sig1,LFNoise2.kr(0.2),amp,2,~orientation);
 			sig*amp;
 		},
 
@@ -49,7 +49,8 @@
 			sig = PitchShift.ar(sig,grainSize,freqDev.clip(0.5,4.0),maxDev.clip(0.0,3.0),grainSize);
 			sig = LeakDC.ar(sig);
 			LocalOut.ar(sig*0.7);
-			sig = Pan2.ar(sig,TRand.kr(-1.0,1.0,1-hasFreq).lag(maxDev),amp);
+			sig = PanAz.ar(~numChannels,sig,TRand.kr(-1.0,1.0,1-hasFreq).lag(maxDev),amp,2,~orientation);
+
 		},
 
 		"fftFreeze" -> {
@@ -63,7 +64,7 @@
 			chain = FFT(LocalBuf(frames), sig, 0.5, 0, 1, frames);
 			chain = PV_Freeze(chain,trig);
 			sig = IFFT(chain);
-			sig = Pan2.ar(sig*trig,TRand.kr(-1.0,1.0,trig),amp);
+			sig = PanAz.ar(~numChannels,sig*trig,TRand.kr(-1.0,1.0,trig),amp,2,~orientation);
 		},
 	],
 
@@ -80,7 +81,7 @@
 			sig = (In.ar(inBus,1))*gate;
 			mod = SinOsc.ar(In.kr(~freqBus)*2*SinOsc.ar(dev).range(0.75,0.75.reciprocal));
 			sig = sig*mod;
-			sig = Pan2.ar(sig,LFNoise2.kr(0.2));
+			sig = PanAz.ar(~numChannels,sig,LFNoise2.kr(0.2).range((2/~numChannels).neg,(2/~numChannels)),1,2,~orientation);
 		},
 
 		"pitchShift" -> {
@@ -92,7 +93,7 @@
 			maxDev = SinOsc.kr(In.kr(~varianceIOIBus)).clip(0.01,0.05);
 			sig = In.ar(inBus,1);
 			sig = PitchShift.ar(sig,grainSize,freqDev,maxDev,grainSize);
-			sig = Pan2.ar(sig,LFNoise2.kr(0.2));
+			sig = PanAz.ar(~numChannels,sig,LFNoise2.kr(0.2).range((2/~numChannels).neg,(2/~numChannels)),1,2,~orientation);
 		},
 
 		"bitz" -> {
@@ -104,8 +105,9 @@
 
 			sig = In.ar(inBus,1);
 			sig = Decimator.ar(sig,SampleRate.ir * rate.clip(0.01,1.0), 24 * bits.clip(0.05,1.0));
-			sig = Pan2.ar(sig,LFNoise2.kr(0.2),amp);
+			sig = PanAz.ar(~numChannels,sig,LFNoise2.kr(0.2).range((2/~numChannels).neg,(2/~numChannels)),1,2,~orientation);
 		},
+
 	],
 
 	/**************************/
@@ -122,7 +124,7 @@
 			sig = BHiPass4.ar(sig,100,2);
 			sig = BLowPass4.ar(sig,filt,rq);
 			sig = LeakDC.ar(sig);
-			sig = sig*amp;
+			sig = PanAz.ar(~numChannels,sig.sum,LFNoise2.kr(2),amp,2,~orientation);
 		},
 	],
 ];
@@ -136,8 +138,7 @@
 		bufFr = BufFrames.kr(bufnum)-1;
 		pointer = LFDNoise1.ar(freq).range(0,bufFr);
 		sig = BufRd.ar(1,bufnum,pointer,1);
-		sig = Pan2.ar(sig,pointer.linlin(0,bufFr,-1.0,1.0))
-
+		sig = PanAz.ar(~numChannels,sig,pointer.linlin(0,bufFr,-0.5,0.5),1,2,~orientation);
 	},
 
 	"bufStutter" -> {
@@ -152,7 +153,7 @@
 		rand = TIRand.kr(-1,1,trig);
 		sig = PlayBuf.ar(1,bufnum,rate,trig,pointer,loop: 1).lag(rate.reciprocal*0.066);
 		sig = BLowPass4.ar(sig,6000);
-		sig = Pan2.ar(sig,pointer.linlin(0,bufFr,rand.asFloat,rand.neg.asFloat),0.8);
+		sig = PanAz.ar(~numChannels,sig,pointer.linlin(0,bufFr,rand.asFloat,rand.neg.asFloat),0.8,2,~orientation);
 	},
 
 	"bufAMRing" -> {
@@ -166,7 +167,7 @@
 		sig = car*mod.lag;
 		sig = sig * SinOsc.ar(ringfreq);
 		sig = BHiShelf.ar(sig,6000,0.5,-6);
-		sig = Pan2.ar(sig,LFNoise2.kr(0.2));
+		sig = PanAz.ar(~numChannels,sig,LFNoise2.kr(0.2).range((2/~numChannels).neg,(2/~numChannels)),1,2,~orientation);
 	},
 
 	"tGrainz" -> {
@@ -183,21 +184,21 @@
 			+
 			(TRand.kr(-0.5 * posDev, 0.5 * posDev, trig) * bufDur)).mod(bufSection);
 
-		sig = TGrains.ar(2,trig,bufnum,rate.clip(0.3,2.0).neg,pointer,grainDur,Latch.kr(LFNoise2.kr(40),trig),amp);
+		sig = TGrains.ar(~numChannels,trig,bufnum,rate.clip(0.5,2.0).neg,pointer,grainDur,Latch.kr(LFNoise2.kr(40),trig),amp);
 	},
 ]
 );
 
 (
 SynthDef(\inPlayer,{
-	arg inBus,pan=0,compThresh=0.5,filtFreqHi=2000,rsHi=0.25,filtFreqLo=80,rsLo=0.25,amp=1.0,analyserOut,transformOut,outBus;
+	arg inBus,pan=0,compThresh=0.5,filtFreqHi=2000,rsHi=0.25,filtFreqLo=80,rsLo=0.25,amp=1.0,analyserOut,outBus;
 	var sig;
 
 	sig = SoundIn.ar(inBus);
 	sig = BHiShelf.ar(sig,filtFreqHi,rsHi,0);
 	sig = BLowShelf.ar(sig,filtFreqLo,rsLo,0);
 	sig = Compander.ar(sig,sig,compThresh,1,0.5,0.01,0.01);
-	sig = Pan2.ar(sig,pan);
+	sig = PanAz.ar(~numChannels ,sig,pan,1,2,~orientation);
 	Out.ar(analyserOut,Mix(sig));
 	Out.ar(outBus,sig*amp);
 
@@ -221,7 +222,7 @@ SynthDef(\analyser, {
 	trig = Impulse.kr(4);
 
 	SendReply.kr(trig, '/analysis', [amp,silence,freq,hasFreq,onsets,centroid,specFlatness,density,meanIOI,varianceIOI,time]);
-	Out.kr(~ampBus,amp);
+	Out.kr(~ampBus,amp); //these all need arguments so that the info ends up being associated with the right player!!
 	Out.kr(~silenceBus,silence);
 	Out.kr(~freqBus,freq);
 	Out.kr(~hasFreqBus,hasFreq);
@@ -294,7 +295,7 @@ SynthDef(\snowSines, {
 	env = EnvGen.kr(Env([0,1,0],[atk,rls]),gate,doneAction: 2);
 	sig = SinOsc.ar(freq)*BrownNoise.ar(0.5,0.5);
 	sig = RLPF.ar(sig,freq*1.5,rq,1/rq.sqrt);
-	sig = Pan2.ar(sig,pan,amp*0.7);
+	sig = PanAz.ar(~numChannels,sig,pan,amp*0.7,2,~orientation); //could also pass pan as an argument so that they are static drones?
 	sig = sig*env;
 	Out.ar(outBus,sig);
 
@@ -307,7 +308,7 @@ SynthDef(\screech,{
 	in = SinOsc.ar(freq)*Trig.kr(trig,0.04);
 	sig = CombC.ar(in,0.04,0.04*LFNoise0.ar(50).abs,6.0,1);
 	sig = Limiter.ar(sig,1.0);
-	sig = Pan2.ar(sig,pan,amp);
+	sig = PanAz.ar(~numChannels,sig,pan,amp,2,~orientation);
 	sig = LeakDC.ar(sig);
 	DetectSilence.ar(sig,doneAction:2);
 	Out.ar(outBus,sig);
@@ -325,7 +326,7 @@ SynthDef(\freezeBells,{
 	chain = PV_BrickWall(chain,ramp);
 	sig = IFFT(chain)!2;
 	sig = AllpassC.ar(sig,0.2,0.2,1.0);
-	sig = Splay.ar(sig*ramp.abs,ramp.abs.reciprocal/1000,amp);
+	sig = SplayAz.ar(~numChannels,sig*ramp.abs,ramp.abs.reciprocal/1000,amp,~numChannels,0,~orientation);
 	sig = Out.ar(outBus,sig);
 
 }).add;
@@ -339,14 +340,14 @@ SynthDef(\clicks,{
 	pan = LinRand(-1,1);
 	sig = osc*osc+osc;
 	sig = BLowPass.ar(sig,8000*env.lag(ts*0.8),env.reciprocal/4);
-	sig = Pan2.ar(sig*env,Line.kr(pan,pan.neg,ts/4));
+	sig = PanAz.ar(~numChannels,sig*env,Line.kr(pan,pan.neg,ts/4),amp,2,~orientation);
 	sig = LeakDC.ar(sig);
-	Out.ar(outBus,sig*amp);
+	Out.ar(outBus,sig);
 
 }).add;
 
 );
 
-"Stero transforms loaded".postln;
+"multichannel transforms loaded".postln;
 
 );
