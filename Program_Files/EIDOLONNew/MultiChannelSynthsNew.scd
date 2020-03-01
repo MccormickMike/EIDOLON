@@ -97,15 +97,15 @@
 		},
 
 		"bitz" -> {
-			arg inBus,pan=0,amp=0.8;
+			arg inBus,amp=0.3;
 			var sig, rate,bits;
 
-			rate = In.kr(~freqBus.explin(20,20000,0.01,1.0));
+			rate = In.kr(~freqBus);
 			bits = In.kr(~specFlatnessBus);
 
 			sig = In.ar(inBus,1);
-			sig = Decimator.ar(sig,SampleRate.ir * rate.clip(0.01,1.0), 24 * bits.clip(0.05,1.0));
-			sig = PanAz.ar(~numChannels,sig,LFNoise2.kr(0.2).range((2/~numChannels).neg,(2/~numChannels)),1,2,~orientation);
+			sig = Decimator.ar(sig,SampleRate.ir * rate.explin(20,20000,0.05,1.0), 24 * bits.clip(0.05,1.0));
+			sig = PanAz.ar(~numChannels,sig,LFNoise2.kr(0.2).range((2/~numChannels).neg,(2/~numChannels)),amp,2,~orientation);
 		},
 
 	],
@@ -337,10 +337,10 @@ SynthDef(\clicks,{
 
 	osc = SinOscFB.ar([freq,freq*1.005],feedback);
 	env = EnvGen.kr(Env.new([0.01,1,0.01],[0.05,0.5],\exp),1,timeScale:ts.clip(2,20),doneAction: 2);
-	pan = LinRand(-1,1);
+	pan = Rand(0.0,2.0);
 	sig = osc*osc+osc;
 	sig = BLowPass.ar(sig,8000*env.lag(ts*0.8),env.reciprocal/4);
-	sig = PanAz.ar(~numChannels,sig*env,Line.kr(pan,pan.neg,ts/4),amp,2,~orientation);
+	sig = PanAz.ar(~numChannels,(sig.sum)*env,Line.kr(pan,pan.neg,ts/4),amp,2,~orientation);
 	sig = LeakDC.ar(sig);
 	Out.ar(outBus,sig);
 
@@ -351,3 +351,4 @@ SynthDef(\clicks,{
 "multichannel transforms loaded".postln;
 
 );
+

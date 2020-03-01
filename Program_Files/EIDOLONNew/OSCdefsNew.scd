@@ -57,10 +57,10 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 		// {current_time > ~waitBeforeStartTime}{state = "support"} // testing....
 		{current_time > ~waitBeforeStartTime and: {current_time < ~performanceLength}}
 		{
-			if((current_time - ~waitBeforeStartTime) < 120,//2 minutes of ignore time...
+			if((current_time - ~waitBeforeStartTime) < 120,//2 minutes of ignore time... 300/ 4
 				{state = "ignore"},
 				{
-					if(~memory[playerIndex]["state"].indicesOfEqual(~memory[playerIndex]["state"][0]).last % 600 == 0,//determines minimum phrase length...
+					if(~memory[playerIndex]["state"].indicesOfEqual(~memory[playerIndex]["state"][playerIndex]).last % 300 == 0,//determines minimum phrase length...
 						{
 							case
 							{~memory[playerIndex]["state"][0] == "ignore"}{state = ["support","ignore"].wchoose([0.85,0.15])}
@@ -190,21 +190,17 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 				}
 			);
 
-			if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {current_time < (~performanceLength/3)} and: {keyList.size < 3} and: {current_event == 0} || {Ndef("tesla%".format(playerIndex).asSymbol).isPlaying.not} and: {recent_silence > 0.9} and: {current_time > (~performanceLength/3)} and: {current_event == 0},
+			if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {current_time < (~performanceLength/3)} and: {keyList.size < 3} and: {current_event == 0} || {Ndef("tesla%".format(playerIndex).asSymbol).isPlaying.not} and: {recent_silence > 0.94} and: {current_time > (~performanceLength * 0.75)} and: {current_event == 0},
 				{
-					{2.do({
-						2.0.rrand(10.0).wait;
-						Synth(\clicks,[\ts,(recent_silence + 2) * 10,\freq,current_varianceIOI.clip(0.01,0.3),\feedback,60,\amp,0.1,\outBus,~switcherBus]);
-						15.0.rrand(20.0).wait;
-					})
-					}.fork;
+					Synth(\clicks,[\ts,current_varianceIOI.rrand(20),\freq,(recent_silence % 0.9 * 4.rrand(15)),\feedback,60,\amp,0.1,\outBus,~switcherBus]);
+
 					"crawlers%".format(playerIndex).postln;
 					current_event = "crawlers%".format(playerIndex);
 				}
 			);
 
 			//"bufTransforms"
-			if(~recorder[playerIndex] > 0 and: {recent_amp <= -24} and: {recent_hasFreq > 0.6} and: {current_time < (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},
+			if(~recorder[playerIndex] > 0 and: {recent_amp <= -18} and: {recent_hasFreq > 0.3} and: {keyList.size < 3} and: {current_event == 0},
 				{
 					var key = (bufferKey ++ playerIndex);
 
@@ -235,7 +231,7 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 		{state == "ignore"}
 		{
 			case
-			{(~memory[0]["state"].indicesOfEqual("ignore") ? 0).asArray.last % 720 == 1} //after 3 minutes (?????) it should be silent for a bit...I think!
+			{(~memory[playerIndex]["state"].indicesOfEqual("ignore") ? 0).asArray.last % 720 == 1} //after 3 minutes (?????) it should be silent for a bit...I think!
 			{
 				~transforms.values.collect({
 					arg subDicts;
@@ -245,7 +241,7 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 					})
 				});
 			}
-			{(~memory[playerIndex]["state"].indicesOfEqual("ignore") ? 0).asArray.last % 300 == 2}
+			{(~memory[playerIndex]["state"].indicesOfEqual("ignore") ? 0).asArray.last % 180 == 2}
 			{
 				var key,dict, playerKey;
 
@@ -253,7 +249,8 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 					arg subDicts;
 					subDicts.keysDo({
 						arg key;
-						if(Ndef((key ++ playerIndex).asSymbol).isPlaying,{Ndef((key ++ playerIndex).asSymbol).end(fadeTime)})
+						if(Ndef((key ++ playerIndex).asSymbol).isPlaying,{Ndef((key ++ playerIndex).asSymbol).end(fadeTime)});
+						"% OFF".format(playerKey).postln;
 					})
 				});
 
@@ -268,24 +265,24 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 						"% ON".format(playerKey).postln;
 					},
 					{
-						if(Ndef(playerKey).isPlaying,{Ndef(playerKey).end(fadeTime)})
+						if(Ndef(playerKey).isPlaying,{Ndef(playerKey).end(fadeTime)});
+						"% OFF".format(playerKey).postln;
 					}
 				);
 			}
 		}
 
-		{state == "tacet"}
+		{state == "tacet"} //this doesn't seem to always work...
 		{
-			if(~memory[playerIndex]["state"].indicesOfEqual("tacet").asArray.last == 4,{
+			if((~memory[playerIndex]["state"].indicesOfEqual("tacet").asArray.at(4) ? 0) == 4,{
 				~transforms.values.collect({
-					arg subDicts; subDicts.keysDo({
+					arg subDicts;
+					subDicts.keysDo({
 						arg key;
 						if(Ndef((key ++ playerIndex).asSymbol).isPlaying,{Ndef((key ++ playerIndex).asSymbol).end(fadeTime)})
 					})
 				});
-			});
 
-			if(~memory[playerIndex]["state"].indicesOfEqual("tacet").asArray.last == 8,{
 				~bufTransforms.keysDo({
 					arg key;
 					if(Ndef((key ++ playerIndex).asSymbol).isPlaying,{Ndef((key ++ playerIndex).asSymbol).end(fadeTime)})
@@ -317,6 +314,23 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 				})
 			}
 		});
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//cycle synths
+
+		(
+			~synthKeys[playerIndex].keysDo({
+				arg key;
+				var synthKey = (~synthKeys[playerIndex][key][0] ++ playerIndex);
+
+				if(Ndef(synthKey.asSymbol).isPlaying.not and: {(~memory[playerIndex]["events"].indicesOfEqual(synthKey) ? 0).asArray.last > 720}, //should cycle synths every 3 minutes
+					{
+
+						~synthKeys[playerIndex][key] = ~synthKeys[playerIndex][key].rotate(-1);
+
+				});
+			})
+		);
 
 		~memory[playerIndex]["past_amp"] = ~memory[playerIndex]["past_amp"].addFirst(current_amp);
 		~memory[playerIndex]["past_silence"] = ~memory[playerIndex]["past_silence"].addFirst(current_silence);
@@ -364,14 +378,14 @@ OSCdef(\globalListener, {
 	var current_time = msg[13];
 	var current_event = 0;
 
-
-	"\rGLOBAL
-current_amp: % \rrecent_amp: % \rcurrent_silence: % \rrecent_silence: % \rcurrent_freq: % \rrecent_freq: % \rcurrent_hasFreq: % \rrecent_hasFreq: % \ronsets: % \rcurrent_centroid: % \rrecent_centroid: %
-current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_density: % \rcurrent_meanIOI: % \rrecent_meanIOI: % \rcurrent_varianceIOI: % \rrecent_varianceIOI: %
-
-current_time: %".format(current_amp,recent_amp,current_silence,recent_silence,current_freq,recent_freq,current_hasFreq,recent_hasFreq,onsets,current_centroid,recent_centroid,current_specFlatness,
-		recent_specFlatness,current_density,recent_density,current_meanIOI,recent_meanIOI,current_varianceIOI,recent_varianceIOI,current_time).postln;
-
+	//
+	// "\rGLOBAL
+	// current_amp: % \rrecent_amp: % \rcurrent_silence: % \rrecent_silence: % \rcurrent_freq: % \rrecent_freq: % \rcurrent_hasFreq: % \rrecent_hasFreq: % \ronsets: % \rcurrent_centroid: % \rrecent_centroid: %
+	// current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_density: % \rcurrent_meanIOI: % \rrecent_meanIOI: % \rcurrent_varianceIOI: % \rrecent_varianceIOI: %
+	//
+	// current_time: %".format(current_amp,recent_amp,current_silence,recent_silence,current_freq,recent_freq,current_hasFreq,recent_hasFreq,onsets,current_centroid,recent_centroid,current_specFlatness,
+	// recent_specFlatness,current_density,recent_density,current_meanIOI,recent_meanIOI,current_varianceIOI,recent_varianceIOI,current_time).postln;
+	//
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

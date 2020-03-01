@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////EIDOLON////////////////////////////////////////////////////////////////////
+m///////////////////////////////////////////////////////EIDOLON////////////////////////////////////////////////////////////////////
 
 (
 s = Server.default;
@@ -11,7 +11,8 @@ o.sampleRate = 48000;
 
 // Choose Device
 // o.device = "Scarlett 2i2 USB"
-o.device = "OCTA-CAPTURE";
+// o.device = "OCTA-CAPTURE";
+o.device = "Fireface UC Mac (23741446)";
 )
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,7 +26,7 @@ s.freeAll;
 
 s.waitForBoot({
 
-	~onsetThreshold = [0.13]; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
+	~onsetThreshold = [0.18]; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
 
 	// in new  version of EIDOLON, frequency of the SendReply trigger can be an environment variable, and can be added to the OSC defs
 	// to allow for the same amount of time to pass with different trigger rates.
@@ -41,18 +42,18 @@ s.waitForBoot({
 
 
 	//needs also to be an array
-	~inBus = [0];
+	~inBus = [4];
 	~outBus = 0;
-	~performanceLength = 600; //in seconds
+	~performanceLength = 300; //in seconds
 	~numPlayers = ~inBus.size;
-	~numChannels = 2;
+	~numChannels = 8;
 	~orientation = 0.5; // 0 if center front, 0.5, if bisecting a  vertex
 	~pan = [0]; // if using a center front speaker, must change the width to 3 speakers?
-	~inVolume = [0.5]; //between 0.0 and 1.0; volume for clean thru signal
+	~inVolume = [0.9]; //between 0.0 and 1.0; volume for clean thru signal
 	//have to figure out a way to get output volume through Global output, but not to PA output...another argument!!
 
 
-	~waitBeforeStartTime = 1; //in seconds
+	~waitBeforeStartTime = 3; //in seconds
 
 	// make this into an event, as in profiles for each of the players
 
@@ -111,10 +112,4 @@ s.waitForBoot({
 ~eidolon.play;
 //RECORD
 s.record(numChannels: ~numChannels)
-
-//remove the new!!!
-
-// ...AND THIS ONE TO STOP IT
-~eidolon.stop;
-
 

@@ -58,7 +58,7 @@
 			var frames=4096;
 
 			sig = In.ar(inBus,1);
-			trig = In.kr(~onsetsBus) + (1 - In.kr(~onsetsBus));
+			trig = In.kr(~onsetsBus) + In.kr(~hasFreqBus);
 			trig = Trig.kr(trig,TRand.kr(0.3,0.5,trig));
 			chain = FFT(LocalBuf(frames), sig, 0.5, 0, 1, frames);
 			chain = PV_Freeze(chain,trig);
@@ -96,15 +96,15 @@
 		},
 
 		"bitz" -> {
-			arg inBus,pan=0,amp=0.8;
+			arg inBus,amp=0.3;
 			var sig, rate,bits;
 
-			rate = In.kr(~freqBus.explin(20,20000,0.01,1.0));
+			rate = In.kr(~freqBus);
 			bits = In.kr(~specFlatnessBus);
 
 			sig = In.ar(inBus,1);
-			sig = Decimator.ar(sig,SampleRate.ir * rate.clip(0.01,1.0), 24 * bits.clip(0.05,1.0));
-			sig = Pan2.ar(sig,LFNoise2.kr(0.2),amp);
+			sig = Decimator.ar(sig,SampleRate.ir * rate.explin(20,20000,0.05,1.0), 24 * bits.clip(0.05,1.0));
+			sig = Pan2.ar(sig,LFNoise2.kr(0.2).range(-0.8,0.8),amp);
 		},
 	],
 
@@ -183,7 +183,7 @@
 			+
 			(TRand.kr(-0.5 * posDev, 0.5 * posDev, trig) * bufDur)).mod(bufSection);
 
-		sig = TGrains.ar(2,trig,bufnum,rate.clip(0.3,2.0).neg,pointer,grainDur,Latch.kr(LFNoise2.kr(40),trig),amp);
+		sig = TGrains.ar(2,trig,bufnum,rate.clip(0.6,2.0).neg,pointer,grainDur,Latch.kr(LFNoise2.kr(40),trig),amp);
 	},
 ]
 );
