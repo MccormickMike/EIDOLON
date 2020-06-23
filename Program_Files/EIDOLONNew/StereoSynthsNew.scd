@@ -220,7 +220,7 @@ SynthDef(\analyser, {
 	time = Sweep.ar;
 	trig = Impulse.kr(4);
 
-	SendReply.kr(trig, '/analysis', [amp,silence,freq,hasFreq,onsets,centroid,specFlatness,density,meanIOI,varianceIOI,time]);
+	SendReply.kr(trig, '/analysis', [amp,silence,freq,hasFreq,onsets,centroid,specFlatness,density,meanIOI,varianceIOI,time]); //these busNums should be passed as arguments!!!
 	Out.kr(~ampBus,amp);
 	Out.kr(~silenceBus,silence);
 	Out.kr(~freqBus,freq);
