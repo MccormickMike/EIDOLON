@@ -57,7 +57,7 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 		// {current_time > ~waitBeforeStartTime}{state = "support"} // testing....
 		{current_time > ~waitBeforeStartTime and: {current_time < ~performanceLength}}
 		{
-			if((current_time - ~waitBeforeStartTime) < 120,//2 minutes of ignore time... 300/ 4
+			if((current_time - ~waitBeforeStartTime) < 120,//2 minutes of ignore time...
 				{state = "ignore"},
 				{
 					if(~memory[playerIndex]["state"].indicesOfEqual(~memory[playerIndex]["state"][playerIndex]).last % 300 == 0,//determines minimum phrase length...
@@ -100,64 +100,61 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 		{state == "support"}
 		{
 			//"densePerc"
-			if(recent_hasFreq <= 0.3 and: {recent_density >= 7} and: {recent_silence <= 0.35} and: {recent_centroid >= 1500} and: {keyList.size < 3} and: {current_event == 0},
-				{
-					var key = (percKey ++ playerIndex);
+			if(recent_hasFreq <= 0.3 and: {recent_density >= 7} and: {recent_silence <= 0.35} and: {recent_centroid >= 1500} and: {keyList.size < 3} and: {current_event == 0},{
+				var key = (percKey ++ playerIndex);
 
-					if(Ndef(key.asSymbol).isPlaying.not,
-						{Ndef(key.asSymbol,~transforms["densePerc"][percKey]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-							Ndef(key.asSymbol).set(\inBus,~analyserIn[playerIndex]);
-							current_event = key;
-							"% ON".format(key).postln},
-				)},
-				{
-					var key = (percKey ++ playerIndex);
+				if(Ndef(key.asSymbol).isPlaying.not,{
+					Ndef(key.asSymbol,~transforms["densePerc"][percKey]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(key.asSymbol).set(\inBus,~analyserIn[playerIndex]);
+					current_event = key;
+					"% ON".format(key).postln
+				})
+			},{
+				var key = (percKey ++ playerIndex);
 
-					if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).last > 120}, // prevents synths from turning off too quickly...
-						{Ndef(key.asSymbol).end(fadeTime);
-							"% OFF".format(key).postln}
-				)}
-			);
+				if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).last > 120},{ // prevents synths from turning off too quickly...
+					Ndef(key.asSymbol).end(fadeTime);
+					"% OFF".format(key).postln;
+				})
+			});
 
 			//"pitchTrack"
-			if(recent_hasFreq > 0.6 and: {recent_density <= 7} and: {recent_silence < 0.4} and: {keyList.size < 3} and: {current_event == 0},
-				{
-					var key = (pitchKey ++ playerIndex);
+			if(recent_hasFreq > 0.6 and: {recent_density <= 7} and: {recent_silence < 0.4} and: {keyList.size < 3} and: {current_event == 0},{
+				var key = (pitchKey ++ playerIndex);
 
-					if(Ndef(key.asSymbol).isPlaying.not,
-						{Ndef(key.asSymbol,~transforms["pitchTrack"][pitchKey]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-							Ndef(key.asSymbol).set(\inBus,~analyserIn[playerIndex]);
-							current_event = key;
-							"% ON".format(key).postln},
-				)},
-				{
-					var key = (pitchKey ++ playerIndex);
+				if(Ndef(key.asSymbol).isPlaying.not,{
+					Ndef(key.asSymbol,~transforms["pitchTrack"][pitchKey]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(key.asSymbol).set(\inBus,~analyserIn[playerIndex]);
+					current_event = key;
+					"% ON".format(key).postln;
+				})
+			},{
+				var key = (pitchKey ++ playerIndex);
 
-					if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).last > 120},
-						{Ndef(key.asSymbol).end(fadeTime);
-							"% OFF".format(key).postln}
-				)}
-			);
+				if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).last > 120},{
+					Ndef(key.asSymbol).end(fadeTime);
+					"% OFF".format(key).postln;
+				})
+			});
 
 			//"fillSilence"
-			if(recent_silence > 0.9 and: {current_time < (~performanceLength/2)} and: {current_event == 0} || {recent_centroid > 2500} and: {recent_density > 10} and: {recent_varianceIOI > 0.2} and: {current_time > (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},
-				{
-					var key = (silenceKey ++ playerIndex);
+			if(recent_silence > 0.9 and: {current_time < (~performanceLength/2)} and: {current_event == 0} || {recent_centroid > 2500} and: {recent_density > 10} and: {recent_varianceIOI > 0.2} and: {current_time > (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},{
+				var key = (silenceKey ++ playerIndex);
 
-					if(Ndef(key.asSymbol).isPlaying.not,
-						{Ndef(key.asSymbol,~transforms["fillSilence"][silenceKey]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-							Ndef(key.asSymbol).set(\inBus,~analyserIn[playerIndex]);
-							current_event = key;
-							"% ON".format(key).postln},
-				)},
-				{
-					var key = (silenceKey ++ playerIndex);
+				if(Ndef(key.asSymbol).isPlaying.not,{
+					Ndef(key.asSymbol,~transforms["fillSilence"][silenceKey]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(key.asSymbol).set(\inBus,~analyserIn[playerIndex]);
+					current_event = key;
+					"% ON".format(key).postln;
+				})
+			},{
+				var key = (silenceKey ++ playerIndex);
 
-					if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).last > 120},
-						{Ndef(key.asSymbol).end(fadeTime);
-							"% OFF".format(key).postln}
-				)}
-			);
+				if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).last > 120},{
+					Ndef(key.asSymbol).end(fadeTime);
+					"% OFF".format(key).postln;
+				})
+			});
 
 
 			//fix all this - it's soooo messy! Can't they be put in a Dictionary and controlled by Ndefs??
@@ -165,63 +162,55 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 			//  |
 			//  V
 
-			if(current_density <= 3 and: {recent_amp <= -28} and: (recent_hasFreq > 0.75) and: {current_time > (~performanceLength/2)} and: {current_event == 0},
+			if(current_density <= 3 and: {recent_amp <= -28} and: (recent_hasFreq > 0.75) and: {current_time > (~performanceLength/2)} and: {current_event == 0},{
 				{
-					{2.do({Synth(\snowSines,[\atk,8.0.rrand(10.0),\rls,8.0.rrand(10.0),\pan,1.0.rand2,\amp,0.02.rrand(0.03),\freq,~memory[playerIndex]["past_freq"][..24].asSet.choose,\outBus,~switcherBus]);
+					2.do({Synth(\snowSines,[\atk,8.0.rrand(10.0),\rls,8.0.rrand(10.0),\pan,1.0.rand2,\amp,0.02.rrand(0.03),\freq,~memory[playerIndex]["past_freq"][..24].asSet.choose,\outBus,~switcherBus]);
 						"snowSines%".format(playerIndex).postln;
 						10.0.rrand(13.0).wait;
 					})
-					}.fork;
-					current_event = "snowSines%".format(playerIndex);
-				}
-			);
+				}.fork;
+				current_event = "snowSines%".format(playerIndex);
+			});
 
-			if(~memory[playerIndex]["past_amp"][0..24].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {~memory[playerIndex]["past_density"][0..24].maxItem <= 5} and: {current_time < (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},
-				{Synth(\freezeBells,[\inBus,~analyserIn[playerIndex],\outBus,~switcherBus],Ndef("input%".format(playerIndex).asSymbol).nodeID,\addAfter);
-					current_event = "freezeBells%".format(playerIndex);
-					"freezeBells%".format(playerIndex).postln;
-				}
-			);
+			if(~memory[playerIndex]["past_amp"][0..24].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {~memory[playerIndex]["past_density"][0..24].maxItem <= 5} and: {current_time < (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},{
+				Synth(\freezeBells,[\inBus,~analyserIn[playerIndex],\outBus,~switcherBus],Ndef("input%".format(playerIndex).asSymbol).nodeID,\addAfter);
+				current_event = "freezeBells%".format(playerIndex);
+				"freezeBells%".format(playerIndex).postln;
+			});
 
-			if(current_density >= 10 and: {current_centroid > 3000} and: {current_amp >= -18} and: {current_time < (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},
-				{Synth(\screech,[\freq,1000,\amp,0.18.rrand(0.25),\pan,1.0.rand2,\outBus,~switcherBus]);
-					current_event = "screech%".format(playerIndex);
-					"screech%".format(playerIndex).postln;
-				}
-			);
+			if(current_density >= 10 and: {current_centroid > 3000} and: {current_amp >= -18} and: {current_time < (~performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},{
+				Synth(\screech,[\freq,1000,\amp,0.18.rrand(0.25),\pan,1.0.rand2,\outBus,~switcherBus]);
+				current_event = "screech%".format(playerIndex);
+				"screech%".format(playerIndex).postln;
+			});
 
-			if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {current_time < (~performanceLength/3)} and: {keyList.size < 3} and: {current_event == 0} || {Ndef("tesla%".format(playerIndex).asSymbol).isPlaying.not} and: {recent_silence > 0.94} and: {current_time > (~performanceLength * 0.75)} and: {current_event == 0},
-				{
-					Synth(\clicks,[\ts,current_varianceIOI.rrand(20),\freq,(recent_silence % 0.9 * 4.rrand(15)),\feedback,60,\amp,0.1,\outBus,~switcherBus]);
+			if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {current_time < (~performanceLength/3)} and: {keyList.size < 3} and: {current_event == 0} || {Ndef("tesla%".format(playerIndex).asSymbol).isPlaying.not} and: {recent_silence > 0.94} and: {current_time > (~performanceLength * 0.75)} and: {current_event == 0},{
+				Synth(\clicks,[\ts,current_varianceIOI.rrand(20),\freq,(recent_silence % 0.9 * 4.rrand(15)),\feedback,60,\amp,0.1,\outBus,~switcherBus]);
 
-					"crawlers%".format(playerIndex).postln;
-					current_event = "crawlers%".format(playerIndex);
-				}
-			);
+				"crawlers%".format(playerIndex).postln;
+				current_event = "crawlers%".format(playerIndex);
+			});
 
 			//"bufTransforms"
-			if(~recorder[playerIndex] > 0 and: {recent_amp <= -18} and: {recent_hasFreq > 0.3} and: {keyList.size < 3} and: {current_event == 0},
-				{
-					var key = (bufferKey ++ playerIndex);
+			if(~recorder[playerIndex] > 0 and: {recent_amp <= -18} and: {recent_hasFreq > 0.3} and: {keyList.size < 3} and: {current_event == 0},{
+				var key = (bufferKey ++ playerIndex);
 
-					if(Ndef(key.asSymbol).isPlaying.not,
-						{Ndef(key.asSymbol,~bufTransforms[bufferKey]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-							Ndef(key.asSymbol).set(\bufnum,~buffers[playerIndex][(~recorder[0] + 1).rand]); //double check this...can maybe use recorder.size.rand?
-							current_event = key;
-							"% ON".format(key).postln},
-				)},
-				{
-					var key = (bufferKey ++ playerIndex);
+				if(Ndef(key.asSymbol).isPlaying.not,{
+					Ndef(key.asSymbol,~bufTransforms[bufferKey]).play(~switcherBus,~numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(key.asSymbol).set(\bufnum,~buffers[playerIndex][(~recorder[0] + 1).rand]); //double check this...can maybe use recorder.size.rand?
+					current_event = key;
+					"% ON".format(key).postln
+				})
+			},{
+				var key = (bufferKey ++ playerIndex);
 
-					if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).last > 120},
-						{Ndef(key.asSymbol).end(fadeTime);
-							"% OFF".format(key).postln}
-				)}
-			);
+				if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).last > 120},{
+					Ndef(key.asSymbol).end(fadeTime);
+					"% OFF".format(key).postln
+				})
+			});
 
 		}
-
-
 
 		//{state == "contrast"}{} //gotta figure this out!
 
@@ -323,14 +312,13 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 				arg key;
 				var synthKey = (~synthKeys[playerIndex][key][0] ++ playerIndex);
 
-				if(Ndef(synthKey.asSymbol).isPlaying.not and: {(~memory[playerIndex]["events"].indicesOfEqual(synthKey) ? 0).asArray.last > 720}, //should cycle synths every 3 minutes
-					{
-
-						~synthKeys[playerIndex][key] = ~synthKeys[playerIndex][key].rotate(-1);
-
+				if(Ndef(synthKey.asSymbol).isPlaying.not and: {(~memory[playerIndex]["events"].indicesOfEqual(synthKey) ? 0).asArray.last > 720},{ //should cycle synths every 3 minutes
+					~synthKeys[playerIndex][key] = ~synthKeys[playerIndex][key].rotate(-1);
 				});
 			})
 		);
+
+		// can this be rewritten into an iteration/.do statement?
 
 		~memory[playerIndex]["past_amp"] = ~memory[playerIndex]["past_amp"].addFirst(current_amp);
 		~memory[playerIndex]["past_silence"] = ~memory[playerIndex]["past_silence"].addFirst(current_silence);

@@ -1,30 +1,26 @@
-m///////////////////////////////////////////////////////EIDOLON////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////EIDOLON////////////////////////////////////////////////////////////////////
 
 (
-s = Server.default;
-o = s.options;
+var server = Server.default;
+var options = server.options;
 
-o.numInputBusChannels = 10;
-o.numOutputBusChannels = 10;
-o.memSize = 2**20;
-o.sampleRate = 48000;
+options.numInputBusChannels = 10;
+options.numOutputBusChannels = 10;
+options.memSize = 2**20;
+options.sampleRate = 48000;
 
 // Choose Device
-// o.device = "Scarlett 2i2 USB"
-// o.device = "OCTA-CAPTURE";
-o.device = "Fireface UC Mac (23741446)";
-)
+// options.device = "Scarlett 2i2 USB"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//this entire interface needs to go into a separate file, with "user" data store in a dic
+//this entire interface needs to go into a separate file, with "user" data store in a dictionary
 
-(
 Ndef.all.clear;
 OSCdef.freeAll;
-s.freeAll;
+server.freeAll;
 
-s.waitForBoot({
+server.waitForBoot({
 
 	~onsetThreshold = [0.18]; //value between 0.0 and 1.0, depends on instrument, microphone, etc.
 
@@ -39,6 +35,8 @@ s.waitForBoot({
 	// also, waitBeforeStartTime should be an environment variable as well, so that buffer recording is not accidentally triggered before the player has started, etc.
 
 	// then, need to add "++ index" to all the Ndef keys so that they are assigned to the right channel/player
+
+	// normalize all synthdef args/inputs and bus outputs!
 
 
 	//needs also to be an array
@@ -57,33 +55,31 @@ s.waitForBoot({
 
 	// make this into an event, as in profiles for each of the players
 
-	//can gain high and then compress hard (lower threshold)
 	~compThresh = [0.5]; //compressor threshold between 0.0 and 1.0 for inputs
-	~compThreshGlobal = 0.5;//compressor threshold between 0.0 and 1.0 for ouput
+	~compThreshGlobal = 0.5; //compressor threshold between 0.0 and 1.0 for ouput
 
+	server.sync;
 
-	s.sync;
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "DictionariesNew.scd").load;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLONNew" +/+ "DictionariesNew.scd").load;
-
-	s.sync;
+	server.sync;
 
 	if(~numChannels < 3,{
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files"+/+ "EIDOLONNew" +/+ "StereoSynthsNew.scd").load;
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "StereoSynthsNew.scd").load;
 	},{
-		(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files"+/+ "EIDOLONNew" +/+ "MultiChannelSynthsNew.scd").load;
+		(PathName(thisProcess.nowExecutingPath).parentPath +/+ "MultiChannelSynthsNew.scd").load;
 
 	});
 
-	s.sync;
+	server.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLONNew" +/+ "SynthKeysNew.scd").load; // when/if busses are passed as arguments to the synths, this dictionaries can go into the Dictionaries File
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "SynthKeysNew.scd").load; // when/if busses are passed as arguments to the synths, this dictionaries can go into the Dictionaries File
 
-	s.sync;
+	server.sync;
 
-	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program_Files" +/+ "EIDOLONNew" +/+ "OSCdefsNew.scd").load;
+	(PathName(thisProcess.nowExecutingPath).parentPath +/+ "OSCdefsNew.scd").load;
 
-	s.sync;
+	server.sync;
 
 	~eidolon = Routine({ //inPlayer modules need pan argument - especially for multiple inputs! Check with engineer about live panning?
 
@@ -111,5 +107,5 @@ s.waitForBoot({
 // STEP 6. EVALUATE THIS LINE TO START THE EIDOLON...
 ~eidolon.play;
 //RECORD
-s.record(numChannels: ~numChannels)
+Server.default.record(numChannels: ~numChannels)
 
