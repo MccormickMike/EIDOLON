@@ -3,18 +3,21 @@
 /*-----------------------------------------------    analyser     -------------------------------------------*/
 
 (
+var players = ~config[\playerProfiles];
 var waitBeforeStartTime = ~config[\waitBeforeStartTime];
 var performanceLength = ~config[\performanceLength];
 var numChannels = ~config[\numChannels];
 var numPlayers = ~config[\numPlayers];
 var switcherBus = ~audioBus["switcherBus"];
 
-numPlayers.do({
-	arg playerIndex;
+players.do({
+	arg profileName,playerIndex;
 	var memory = ~memory[playerIndex];
 	var synthKeys = ~synthKeys[playerIndex];
 	var analyserIn = ~audioBus["analyserIn"][playerIndex];
 	var recorder = ~recorder[playerIndex];
+	var maxVoices = 3; // degree of polyphony
+	var minPhraseLength = 60; // 60 seconds
 	var memoryScale = ~players.asArray[playerIndex][\pollRate]; // this probably needs to change at some point as well...
 	var memLength = memoryScale * 6; // 6 seconds
 
@@ -55,11 +58,11 @@ numPlayers.do({
 		var fadeTime = 0.8;
 
 
-		"\rPLAYER %
+		"\rPLAYER: %
 current_amp: % \rrecent_amp: % \rcurrent_silence: % \rrecent_silence: % \rcurrent_freq: % \rrecent_freq: % \rcurrent_hasFreq: % \rrecent_hasFreq: % \ronsets: % \rcurrent_centroid: % \rrecent_centroid: %
 current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_density: % \rcurrent_meanIOI: % \rrecent_meanIOI: % \rcurrent_varianceIOI: % \rrecent_varianceIOI: %
 
-current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recent_silence,current_freq,recent_freq,current_hasFreq,recent_hasFreq,onsets,current_centroid,recent_centroid,current_specFlatness,
+current_time: %".format(profileName,current_amp,recent_amp,current_silence,recent_silence,current_freq,recent_freq,current_hasFreq,recent_hasFreq,onsets,current_centroid,recent_centroid,current_specFlatness,
 			recent_specFlatness,current_density,recent_density,current_meanIOI,recent_meanIOI,current_varianceIOI,recent_varianceIOI,current_time).postln;
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,10 +73,10 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 		// {current_time > waitBeforeStartTime}{state = "support"} // just for testing....
 		{current_time > waitBeforeStartTime and: {current_time < performanceLength}}
 		{
-			if((current_time - waitBeforeStartTime) < (60 * 2),{ // 2 minutes of ignore time...
+			if((current_time - waitBeforeStartTime) < (performanceLength * 0.08),{ // relative to performanceLength?
 				state = "ignore";
 			},{
-				if(memory["state"].indicesOfEqual(memory["state"].first).last % (memoryScale * 60 * 3) == 0,{ // minimum phrase length: 5 minutes
+				if(memory["state"].indicesOfEqual(memory["state"].first).last % (memoryScale * performanceLength * 0.1) == 0,{ // minimum state length: 3 minutes...or also related to performance length?
 					case
 					{memory["state"][0] == "ignore"}{state = ["support","ignore"].wchoose([0.85,0.15])}
 					{memory["state"][0] == "support"}{state = ["support","tacet"].wchoose([0.85,0.15])}
@@ -84,7 +87,7 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 				});
 			});
 		}
-		{current_time > performanceLength}{state = "tacet"};
+		{current_time >= performanceLength}{state = "tacet"}; // this could also call some other fucntion that neatly wraps up the performance?
 
 		state.postln;
 
@@ -112,7 +115,7 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 		{state == "support"}    // can these each be turned into a function with some args passed in? (conditions, transform key, etc.)
 		{
 			//"densePerc"
-			if(recent_hasFreq <= 0.3 and: {recent_density >= 7} and: {recent_silence <= 0.35} and: {recent_centroid >= 1500} and: {keyList.size < 3} and: {current_event == 0},{
+			if(recent_hasFreq <= 0.3 and: {recent_density >= 7} and: {recent_silence <= 0.35} and: {recent_centroid >= 1500} and: {keyList.size <= maxVoices} and: {current_event == 0},{
 				var key = (percKey ++ playerIndex);
 
 				if(Ndef(key.asSymbol).isPlaying.not,{
@@ -124,14 +127,14 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 			},{
 				var key = (percKey ++ playerIndex);
 
-				if(Ndef(key.asSymbol).isPlaying and: {memory["events"].indicesOfEqual(key).last > (memoryScale * 60)},{ // prevents synths from turning off too quickly...
+				if(Ndef(key.asSymbol).isPlaying and: {memory["events"].indicesOfEqual(key).last > (memoryScale * minPhraseLength)},{ // prevents synths from turning off too quickly...
 					Ndef(key.asSymbol).end(fadeTime);
 					"% OFF".format(key).postln;
 				})
 			});
 
 			//"pitchTrack"
-			if(recent_hasFreq > 0.6 and: {recent_density <= 7} and: {recent_silence < 0.4} and: {keyList.size < 3} and: {current_event == 0},{
+			if(recent_hasFreq > 0.6 and: {recent_density <= 7} and: {recent_silence < 0.4} and: {keyList.size <= maxVoices} and: {current_event == 0},{
 				var key = (pitchKey ++ playerIndex);
 
 				if(Ndef(key.asSymbol).isPlaying.not,{
@@ -143,14 +146,14 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 			},{
 				var key = (pitchKey ++ playerIndex);
 
-				if(Ndef(key.asSymbol).isPlaying and: {memory["events"].indicesOfEqual(key).last > (memoryScale * 60)},{
+				if(Ndef(key.asSymbol).isPlaying and: {memory["events"].indicesOfEqual(key).last > (memoryScale * minPhraseLength)},{
 					Ndef(key.asSymbol).end(fadeTime);
 					"% OFF".format(key).postln;
 				})
 			});
 
 			//"fillSilence"
-			if(recent_silence > 0.9 and: {current_time < (performanceLength/2)} and: {current_event == 0} || {recent_centroid > 2500} and: {recent_density > 10} and: {recent_varianceIOI > 0.2} and: {current_time > (performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},{
+			if(recent_silence > 0.9 and: {current_time < (performanceLength/2)} and: {current_event == 0} || {recent_centroid > 2500} and: {recent_density > 10} and: {recent_varianceIOI > 0.2} and: {current_time > (performanceLength/2)} and: {keyList.size <= maxVoices} and: {current_event == 0},{
 				var key = (silenceKey ++ playerIndex);
 
 				if(Ndef(key.asSymbol).isPlaying.not,{
@@ -162,9 +165,27 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 			},{
 				var key = (silenceKey ++ playerIndex);
 
-				if(Ndef(key.asSymbol).isPlaying and: {memory["events"].indicesOfEqual(key).last > (memoryScale * 60)},{
+				if(Ndef(key.asSymbol).isPlaying and: {memory["events"].indicesOfEqual(key).last > (memoryScale * minPhraseLength)},{
 					Ndef(key.asSymbol).end(fadeTime);
 					"% OFF".format(key).postln;
+				})
+			});
+
+			//"bufTransforms"
+			if(recorder > 0 and: {recent_amp <= -18} and: {recent_hasFreq > 0.3} and: {keyList.size <= maxVoices} and: {current_event == 0},{
+				var key = (bufferKey ++ playerIndex);
+
+				if(Ndef(key.asSymbol).isPlaying.not,{
+					Ndef(key.asSymbol,~bufTransforms[bufferKey]).play(switcherBus,numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					Ndef(key.asSymbol).set(\bufnum,~buffers[playerIndex][(recorder + 1).rand]);
+					"% ON".format(key).postln
+				})
+			},{
+				var key = (bufferKey ++ playerIndex);
+
+				if(Ndef(key.asSymbol).isPlaying and: {memory["bufferEvents"].indicesOfEqual(key).last > (memoryScale * minPhraseLength)},{
+					Ndef(key.asSymbol).end(fadeTime);
+					"% OFF".format(key).postln
 				})
 			});
 
@@ -184,41 +205,24 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 				current_event = "snowSines%".format(playerIndex);
 			});
 
-			if(memory["past_amp"][..memLength].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {memory["past_density"][..memLength].maxItem <= 5} and: {current_time < (performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},{
+			if(memory["past_amp"][..memLength].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {memory["past_density"][..memLength].maxItem <= 5} and: {current_time < (performanceLength/2)} and: {keyList.size <= maxVoices} and: {current_event == 0},{
 				Synth(\freezeBells,[\inBus,analyserIn,\outBus,switcherBus],Ndef("input%".format(playerIndex).asSymbol).nodeID,\addAfter);
 				current_event = "freezeBells%".format(playerIndex);
 				"freezeBells%".format(playerIndex).postln;
 			});
 
-			if(current_density >= 10 and: {current_centroid > 3000} and: {current_amp >= -18} and: {current_time < (performanceLength/2)} and: {keyList.size < 3} and: {current_event == 0},{
+			if(current_density >= 10 and: {current_centroid > 3000} and: {current_amp >= -18} and: {current_time < (performanceLength/2)} and: {keyList.size <= maxVoices} and: {current_event == 0},{
 				Synth(\screech,[\freq,1000,\amp,0.18.rrand(0.25),\pan,1.0.rand2,\outBus,switcherBus]);
 				current_event = "screech%".format(playerIndex);
 				"screech%".format(playerIndex).postln;
 			});
 
-			if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {current_time < (performanceLength/3)} and: {keyList.size < 3} and: {current_event == 0} || {Ndef("tesla%".format(playerIndex).asSymbol).isPlaying.not} and: {recent_silence > 0.94} and: {current_time > (performanceLength * 0.75)} and: {current_event == 0},{
-				Synth(\clicks,[\ts,current_varianceIOI.rrand(20),\freq,(recent_silence % 0.9 * 4.rrand(15)),\feedback,60,\amp,0.1,\outBus,switcherBus]);
+			// these arguments are fucked, I think...
 
+			if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {current_time < (performanceLength/3)} and: {keyList.size <= maxVoices} and: {current_event == 0} || {Ndef("tesla%".format(playerIndex).asSymbol).isPlaying.not} and: {recent_silence > 0.94} and: {current_time > (performanceLength * 0.75)} and: {current_event == 0},{
+				Synth(\clicks,[\ts,current_varianceIOI.rrand(20),\freq,(recent_silence % 0.9 * 4.rrand(15)),\feedback,60,\amp,0.1,\outBus,switcherBus]);
 				"crawlers%".format(playerIndex).postln;
 				current_event = "crawlers%".format(playerIndex);
-			});
-
-			//"bufTransforms"
-			if(recorder > 0 and: {recent_amp <= -18} and: {recent_hasFreq > 0.3} and: {keyList.size < 3} and: {current_event == 0},{
-				var key = (bufferKey ++ playerIndex);
-
-				if(Ndef(key.asSymbol).isPlaying.not,{
-					Ndef(key.asSymbol,~bufTransforms[bufferKey]).play(switcherBus,numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-					Ndef(key.asSymbol).set(\bufnum,~buffers[playerIndex][(recorder + 1).rand]);
-					"% ON".format(key).postln
-				})
-			},{
-				var key = (bufferKey ++ playerIndex);
-
-				if(Ndef(key.asSymbol).isPlaying and: {memory["events"].indicesOfEqual(key).last > (memoryScale * 60)},{ // plays for at least 60 seconds
-					Ndef(key.asSymbol).end(fadeTime);
-					"% OFF".format(key).postln
-				})
 			});
 
 		}
@@ -241,7 +245,7 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 					})
 				});
 			}
-			{(memory["state"].indicesOfEqual("ignore") ? 0).asArray.last % (memoryScale * 60 * 1) == 2}
+			{(memory["state"].indicesOfEqual("ignore") ? 0).asArray.last % (memoryScale * 60 * 1.5) == 2}
 			{
 				var dict = ~transforms.keys.choose;
 				var key = ~transforms[dict].keys.choose;
@@ -269,14 +273,18 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 						"% OFF".format(playerKey).postln;
 					});
 				});
+			};
 
-				// need to also add a way to use all the other synths here, regardless of input....
+			// need to also add a way to use all the other synths here, regardless of input....
 
-			}
 		}
 
 		{state == "tacet"} //this doesn't seem to always work...
 		{
+			// need another conditional - if Ndefs.all(not all though, becase we want to keep our analysers going).do.isPlaying.etc.
+			// then kill 'em all
+			// otherwise don't do anything and save some CPU
+
 			if((memory["state"].indicesOfEqual("tacet").asArray.at(memoryScale) ? 0) == memoryScale,{
 				~transforms.values.collect({
 					arg subDicts;
@@ -331,7 +339,7 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 		(
 			synthKeys.keysDo({
 				arg key;
-				var synthKey = (synthKeys[key][0] ++ playerIndex);
+				var synthKey = (synthKeys[key].first ++ playerIndex);
 
 				if(Ndef(synthKey.asSymbol).isPlaying.not and: {(memory["events"].indicesOfEqual(synthKey) ? 0).asArray.last > (memoryScale * (performanceLength/5))},{
 					synthKeys[key] = synthKeys[key].rotate(-1);
@@ -339,7 +347,7 @@ current_time: %".format(playerIndex,current_amp,recent_amp,current_silence,recen
 			})
 		);
 
-		// can this be rewritten into an iteration/.do statement?
+		// can this be rewritten into an iteration / .do statement?
 
 		memory["past_amp"] = memory["past_amp"].addFirst(current_amp);
 		memory["past_silence"] = memory["past_silence"].addFirst(current_silence);

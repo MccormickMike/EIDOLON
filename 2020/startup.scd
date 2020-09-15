@@ -37,6 +37,7 @@ server.waitForBoot({
 			4,{entry.fullPath.load},
 			5,{entry.fullPath.load},
 			6,{entry.fullPath.load},
+			7,{entry.fullPath.load},
 		);
 	});
 });
@@ -47,3 +48,4 @@ server.waitForBoot({
 Server.default.record(numChannels: ~config[\numChannels]);
 
 ~play.value;
+~stop.value

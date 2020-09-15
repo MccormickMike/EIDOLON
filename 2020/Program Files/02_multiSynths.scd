@@ -167,8 +167,8 @@ SynthDef(\inPlayer,{
 	sig = BHiShelf.ar(sig,\filtFreqHi.kr(2000),\rsHi.kr(0.25),0);
 	sig = BLowShelf.ar(sig,\filtFreqLo.kr(80),\rsLo.kr(0.25),0);
 	sig = Compander.ar(sig,sig,\compThresh.kr(0.5),1,0.5,0.01,0.01);
+	Out.ar(\analyserOut.kr,sig);
 	sig = PanAz.ar(numChannels,sig,\pan.kr(0),1,2,orientation);
-	Out.ar(\analyserOut.kr,Mix(sig));
 	Out.ar(\outBus.kr,sig * \amp.kr(1));
 
 }).add;
@@ -245,8 +245,10 @@ SynthDef(\recorder,{
 }).add;
 
 SynthDef(\reverb,{
-	var sig = In.ar(\inBus.kr,numChannels);
-	sig = FreeVerb.ar(sig,\mix.kr(0.8),\room.kr(0.2),\damp.kr(0.2),\amp.kr(0.8));
+	var sig = In.ar(\inBus.kr,1);
+	sig = FreeVerb.ar(sig,1,100,\damp.kr(0.4));
+	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
+	sig = PanAz.ar(numChannels,sig,\pan.kr(0),\amp.kr(0.8),2,orientation);
 	Out.ar(\outBus.kr,sig);
 
 }).add;

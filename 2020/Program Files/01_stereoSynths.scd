@@ -19,9 +19,9 @@ var numChannels = ~config[\numChannels];
 			var sig1;
 
 			var sig = In.ar(\inBus.kr,1);
-			var trig = In.kr(~onsetsBus) + In.kr(~hasFreqBus);
+			var trig = In.kr(~controlBus[0]["onsetsBus"]) + In.kr(~controlBus[0]["hasFreqBus"]);
 			var gate = EnvGen.ar(Env.sine(0.1),trig);
-			var rand = In.kr(~silenceBus);
+			var rand = In.kr(~controlBus[0]["silenceBus"]);
 			rand = TExpRand.kr(0.05,0.3,rand);
 			sig = CombC.ar(sig*gate,0.6,rand,Select.kr(Trig1.kr(trig,rand-0.01),[inf,0]));
 			sig1 = DelayN.ar(sig,0.6,rand*7/5);
@@ -31,8 +31,8 @@ var numChannels = ~config[\numChannels];
 
 		"percShiftDelay" -> {
 			var grainSize=1.0,freq,hasFreq;
-			var freqDev = In.kr(~varianceIOIBus).clip(0.6,1.2);
-			var maxDev = In.kr(~specFlatnessBus).clip(0.3,0.8);
+			var freqDev = In.kr(~controlBus[0]["varianceIOIBus"]).clip(0.6,1.2);
+			var maxDev = In.kr(~controlBus[0]["specFlatnessBus"]).clip(0.3,0.8);
 			var	sig = In.ar(\inBus.kr,1);
 
 			sig = sig + LocalIn.ar(1);
@@ -49,7 +49,7 @@ var numChannels = ~config[\numChannels];
 			var frames=4096;
 
 			var	sig = In.ar(\inBus.kr,1);
-			var trig = In.kr(~onsetsBus) + In.kr(~hasFreqBus);
+			var trig = In.kr(~controlBus[0]["onsetsBus"]) + In.kr(~controlBus[0]["hasFreqBus"]);
 			trig = Trig.kr(trig,TRand.kr(0.3,0.5,trig));
 			chain = FFT(LocalBuf(frames), sig, 0.5, 0, 1, frames);
 			chain = PV_Freeze(chain,trig);
@@ -63,10 +63,10 @@ var numChannels = ~config[\numChannels];
 	"pitchTrack" -> Dictionary
 	[
 		"ringMod" -> {
-			var dev = TExpRand.kr(0.01,4000,In.kr(~onsetsBus));
-			var gate = In.kr(~hasFreqBus);
+			var dev = TExpRand.kr(0.01,4000,In.kr(~controlBus[0]["onsetsBus"]));
+			var gate = In.kr(~controlBus[0]["hasFreqBus"]);
 			var sig = (In.ar(\inBus.kr,1))*gate;
-			var mod = SinOsc.ar(In.kr(~freqBus)*2*SinOsc.ar(dev).range(0.75,0.75.reciprocal));
+			var mod = SinOsc.ar(In.kr(~controlBus[0]["freqBus"])*2*SinOsc.ar(dev).range(0.75,0.75.reciprocal));
 			sig = sig*mod;
 			sig = Pan2.ar(sig,LFNoise2.kr(0.2));
 		},
@@ -75,16 +75,16 @@ var numChannels = ~config[\numChannels];
 			var grainSize=0.15,maxDev,sig;
 
 			var	freqDev = Drand([7/8,8/7,8/9,9/8,9/10,10/9],inf);
-			freqDev = Demand.kr(Dust.kr(In.kr(~specFlatnessBus)*5),0,freqDev);
-			maxDev = SinOsc.kr(In.kr(~varianceIOIBus)).clip(0.01,0.05);
+			freqDev = Demand.kr(Dust.kr(In.kr(~controlBus[0]["specFlatnessBus"])*5),0,freqDev);
+			maxDev = SinOsc.kr(In.kr(~controlBus[0]["varianceIOIBus"])).clip(0.01,0.05);
 			sig = In.ar(\inBus.kr,1);
 			sig = PitchShift.ar(sig,grainSize,freqDev,maxDev,grainSize);
 			sig = Pan2.ar(sig,LFNoise2.kr(0.2));
 		},
 
 		"bitz" -> {
-			var rate = In.kr(~freqBus);
-			var bits = In.kr(~specFlatnessBus);
+			var rate = In.kr(~controlBus[0]["freqBus"]);
+			var bits = In.kr(~controlBus[0]["specFlatnessBus"]);
 
 			var sig = In.ar(\inBus.kr,1);
 			sig = Decimator.ar(sig,SampleRate.ir * rate.explin(20,20000,0.05,1.0), 24 * bits.clip(0.05,1.0));    //add limiter???
@@ -114,7 +114,7 @@ var numChannels = ~config[\numChannels];
 	"bufGlitch" -> {
 		var bufnum = \bufnum.kr;
 
-		var freq = (In.kr(~specFlatnessBus)).clip(0.6,1.0);
+		var freq = (In.kr(~controlBus[0]["specFlatnessBus"])).clip(0.6,1.0);
 		var bufFr = BufFrames.kr(bufnum)-1;
 		var pointer = LFDNoise1.ar(freq).range(0,bufFr);
 		var sig = BufRd.ar(1,bufnum,pointer,1);
@@ -125,8 +125,8 @@ var numChannels = ~config[\numChannels];
 	"bufStutter" -> {
 		var bufnum = \bufnum.kr;
 
-		var rate = TExpRand.kr(0.7,1.1,In.kr(~silenceBus));
-		var speed = In.kr(~hasFreqBus).clip(1.0,6.0);
+		var rate = TExpRand.kr(0.7,1.1,In.kr(~controlBus[0]["silenceBus"]));
+		var speed = In.kr(~controlBus[0]["hasFreqBus"]).clip(1.0,6.0);
 		var bufFr = BufFrames.kr(bufnum)-1;
 		var trig = Impulse.kr(speed.lag(0.5));
 		var pointer = Phasor.ar(0,0.05,0,bufFr);
@@ -139,7 +139,7 @@ var numChannels = ~config[\numChannels];
 	"bufAMRing" -> {
 		var bufnum = \bufnum.kr;
 
-		var ringfreq = Latch.kr(In.kr(~centroidBus),Impulse.kr(0.8));
+		var ringfreq = Latch.kr(In.kr(~controlBus[0]["centroidBus"]),Impulse.kr(0.8));
 		var modfreq = 7;
 		var car = BufRd.ar(1,bufnum,LFTri.ar((BufDur.ir(bufnum).reciprocal)*LFNoise2.kr(0.5).range(0.6,0.8)).range(0, BufFrames.ir(bufnum)),1);
 		var mod = LFPulse.ar(modfreq*LFNoise2.kr(2).range(0.2,2.0),0,LFNoise0.ar(4).range(0.3,0.8)).abs;
@@ -153,10 +153,10 @@ var numChannels = ~config[\numChannels];
 		var bufnum = \bufnum.kr;
 		var sig,rate,trig,pointer,posDif=0.5,posLo,posDev=0.03,bufSection,bufDur,grainDur=1.2;
 
-		trig = In.kr(~silenceBus);
-		rate = Latch.kr(In.kr(~specFlatnessBus),trig);
+		trig = In.kr(~controlBus[0]["silenceBus"]);
+		rate = Latch.kr(In.kr(~controlBus[0]["specFlatnessBus"]),trig);
 		bufDur = BufDur.kr(bufnum);
-		posLo = TRand.kr(0.0,0.5,In.kr(~hasFreqBus));
+		posLo = TRand.kr(0.0,0.5,In.kr(~controlBus[0]["hasFreqBus"]));
 		bufSection = bufDur * posDif;
 		pointer = posLo * bufDur +
 		(Phasor.ar(trig, BufRateScale.kr(bufnum) / SampleRate.ir,posLo * bufDur,(posLo + posDif) * bufDur)
@@ -175,8 +175,8 @@ SynthDef(\inPlayer,{
 	sig = BHiShelf.ar(sig,\filtFreqHi.kr(2000),\rsHi.kr(0.25),0);
 	sig = BLowShelf.ar(sig,\filtFreqLo.kr(80),\rsLo.kr(0.25),0);
 	sig = Compander.ar(sig,sig,\compThresh.kr(0.5),1,0.5,0.01,0.01);
+	Out.ar(\analyserOut.kr,sig);
 	sig = Pan2.ar(sig,\pan.kr(0));
-	Out.ar(\analyserOut.kr,Mix(sig));
 	Out.ar(\outBus.kr,sig * \amp.kr(1));
 
 }).add;
@@ -253,8 +253,10 @@ SynthDef(\recorder,{
 }).add;
 
 SynthDef(\reverb,{
-	var sig = In.ar(\inBus.kr,numChannels);
-	sig = FreeVerb.ar(sig,\mix.kr(0.8),\room.kr(0.2),\damp.kr(0.2),\amp.kr(0.8));
+	var sig = In.ar(\inBus.kr,1);
+	sig = FreeVerb.ar(sig,1,100,\damp.kr(0.4));
+	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
+	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr(0.8));
 	Out.ar(\outBus.kr,sig);
 
 }).add;
