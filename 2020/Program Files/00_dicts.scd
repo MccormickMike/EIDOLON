@@ -1,16 +1,22 @@
 ///////////////////////////////////////////////////////EIDOLON Dictionaries//////////////////////////////////////////////////////////////////////
 (
 var server = Server.default;
+var numChannels = ~config[\numChannels];
+var numPlayers = ~config[\numPlayers];
 
 //Allocate Audio and Control Busses
 (
 
-//these can all be put into a large dictionary ! ~numPlayers
-~analyserIn = Array.fill(~numPlayers,{Bus.audio(server,~numChannels)});
-~switcherBus = Bus.audio(server,~numChannels);
+// perhaps all Dictionary keys should be symbols instead of strings!??!?!
 
-~reverbBus = Bus.audio(server,~numChannels);
-~globalInBus = Bus.audio(server,~numChannels);
+~audioBus = Dictionary[
+
+	"analyserIn" -> Array.fill(numPlayers,{Bus.audio(server,numChannels)}),
+
+	"switcherBus" -> Bus.audio(server,numChannels),
+	"globalInBus" -> Bus.audio(server,numChannels),
+
+];
 
 ~controlBus = {
 	Dictionary.with(*[
@@ -25,16 +31,16 @@ var server = Server.default;
 		"meanIOIBus" -> Bus.control(server,1),
 		"varianceIOIBus" -> Bus.control(server,1),
 	])
-} ! ~numPlayers;
+} ! numPlayers;
 
 );
 
 //Allocate buffers for recording
-~buffers = {Array.fill(12,{Buffer.alloc(server, server.sampleRate * 12, 1)})} ! ~numPlayers;
+~buffers = {Array.fill(12,{Buffer.alloc(server, server.sampleRate * 12, 1)})} ! numPlayers;
 
 //groups
 (
-~inGroup = Group(server,\addToHead);                          // server can/should be an environment variable!!
+~inGroup = Group(server,\addToHead);
 ~globalOutGroup = Group(server,\addToTail);
 ~interruptGroup = Group(~globalOutGroup,\addBefore);
 );
@@ -58,7 +64,7 @@ var server = Server.default;
 		"state" -> List()
 
 	])
-} ! ~numPlayers;
+} ! numPlayers;
 
 ~globalMemory = Dictionary.with(*[
 	"past_amp" -> List(),
@@ -75,7 +81,7 @@ var server = Server.default;
 ])
 );
 
-~recorder = Array.fill(~numPlayers,0);
+~recorder = Array.fill(numPlayers,{0});
 
 "Data file loaded".postln;
 

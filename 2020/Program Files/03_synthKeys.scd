@@ -1,8 +1,11 @@
 ///////////////////////////////////////////////////////EIDOLON SynthKeys//////////////////////////////////////////////////////////////////////
 
 (
+// can this be moved to OSC file???
 
-~synthKeys = ~numPlayers.collect({
+var numPlayers = ~config[\numPlayers];
+
+~synthKeys = numPlayers.collect({
 	arg playerIndex;
 
 	Dictionary[
@@ -16,4 +19,4 @@
 
 "Synth keys loaded".postln;
 
-);
+)

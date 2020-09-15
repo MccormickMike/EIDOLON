@@ -1,18 +1,37 @@
+(
+~config = (
 
-~test = (
+	Dictionary[ // order/arrange these a bit better!
 
-	performanceLength: 300, // in seconds
-	numChannels: 8, // number of output channels or speakers
-	// spatMode: "VBAP", eventually include SynthDefs w/ different modes???
+		\performanceLength -> (60 * 5), // in seconds
+		\numChannels -> 2, // number of output channels or speakers
+		// \spatMode -> "VBAP", eventually include SynthDefs w/ different modes???
 
-	orientation: 0.5, // 0 if center front, 0.5, if bisecting a  vertex
-	waitBeforeStartTime: 30, // in seconds
-	compThreshGlobal: 0.5, // compressor threshold between 0.0 and 1.0 for ouput
+		\orientation -> 0.5, // 0 if center front, 0.5, if bisecting a  vertex
+		\waitBeforeStartTime -> 5, // in seconds
 
-	playersProfiles: [1,2,3],
+		\compThreshGlobal -> 0.5, // compressor threshold between 0.0 and 1.0 for ouput
+		\onsetThreshGlobal -> 0.5,
+		\pollRateGlobal -> 4,
+		\hardwareOut -> 0,
 
+		\playerProfiles -> ["Mascha"],
 
-
+	]
 );
 
-~numPlayers = ~test[\playersProfiles].size // this can be better!!
+~players = Dictionary();
+
+~config[\playerProfiles].do({  	// load player profiles, eventually a drag and drop thing in a GUI?
+	arg string;
+	var path = PathName(thisProcess.nowExecutingPath).parentPath +/+ "PlayerProfiles/" ++ string ++ ".scd";
+
+	path.load;
+
+});
+
+~config.add(\numPlayers -> ~config[\playerProfiles].size); // this can be much cleaner...
+
+"config file loaded".postln;
+
+)

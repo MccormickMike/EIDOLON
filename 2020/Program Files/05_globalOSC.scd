@@ -1,26 +1,31 @@
 /*-----------------------------------------    global analyser     -------------------------------------------*/
 (
+
+var memoryScale = ~config[\pollRateGlobal]; // this probably needs to change at some point as well...
+var memLength = memoryScale * 6; // 6 seconds
+
 OSCdef(\globalListener, {
 	arg msg;
 	var current_amp = msg[3].ampdb;
-	var recent_amp = ~globalMemory["past_amp"][0..24].median;
+	var recent_amp = ~globalMemory["past_amp"][..memLength].median;
 	var current_silence = msg[4];
-	var recent_silence = ~globalMemory["past_silence"][0..24].mean;
+	var recent_silence = ~globalMemory["past_silence"][..memLength].mean;
 	var current_freq = msg[5];
-	var recent_freq = ~globalMemory["past_freq"][0..24].median;
+	var recent_freq = ~globalMemory["past_freq"][..memLength].median;
 	var current_hasFreq = msg[6];
-	var recent_hasFreq = ~globalMemory["past_hasFreq"][0..24].mean;
+	var recent_hasFreq = ~globalMemory["past_hasFreq"][..memLength].mean;
 	var onsets = msg[7];
 	var current_centroid = msg[8];
-	var recent_centroid = ~globalMemory["past_centroid"][0..24].median;
+	var recent_centroid = ~globalMemory["past_centroid"][..memLength].median;
 	var current_specFlatness = msg[9];
-	var recent_specFlatness = ~globalMemory["past_specFlatness"][0..24].median;
+	var recent_specFlatness = ~globalMemory["past_specFlatness"][..memLength].median;
 	var current_density = msg[10];
-	var recent_density = ~globalMemory["past_density"][0..24].median;
+	var recent_density = ~globalMemory["past_density"][..memLength].median;
 	var current_meanIOI = msg[11];
-	var recent_meanIOI = ~globalMemory["past_meanIOI"][0..24].median;
+	var recent_meanIOI = ~globalMemory["past_meanIOI"][..memLength].median;
 	var current_varianceIOI = msg[12];
-	var recent_varianceIOI = ~globalMemory["past_varianceIOI"][0..24].median;
+	var recent_varianceIOI = ~globalMemory["past_varianceIOI"][..memLength].median;
+
 	var current_time = msg[13];
 	var current_event = 0;
 
@@ -37,7 +42,7 @@ OSCdef(\globalListener, {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//interrupt layer
 
-	// if(current_time > 3.0 and: {current_time < 3.2},{Ndef(\switcher,\reverbBus)});
+	// if(current_time > 3.0 and: {current_time < 3.2},{Ndef(\switcher,\reverb)});
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -20,49 +20,30 @@ server.freeAll;
 
 server.waitForBoot({
 
-	// load config file
-	// load player profiles
+	// load config file - could also have different profiles eventually?
+
+	"config.scd".loadRelative;
+
 	// load program files
+	PathName(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program Files/").entries.do({
+		arg entry,index;
+		var stereo = ~config[\numChannels] < 3;
 
-	// if more than 2 channels, load multichannel synthdefs!
-
-	~eidolon = Routine({ //inPlayer modules need pan argument - especially for multiple inputs! Check with engineer about live panning?
-
-		~numPlayers.do({
-			arg playerIndex;
-
-			Ndef("input%".format(playerIndex).asSymbol,\inPlayer).play(group:~inGroup);
-			Ndef("input%".format(playerIndex).asSymbol).set(\amp,~inVolume[playerIndex],\compThresh,~compThresh[playerIndex],\pan,~pan[playerIndex],\inBus,~inBus[playerIndex],\analyserOut,~analyserIn[playerIndex],\outBus,~switcherBus);
-			Ndef("analyser%".format(playerIndex).asSymbol,\analyser).play(group:~inGroup);
-			Ndef("analyser%".format(playerIndex).asSymbol).set(
-				\inBus,~analyserIn[playerIndex],
-				\thresh,~onsetThreshold[playerIndex],
-				\amp,~controlBus[playerIndex]["ampBus"],
-				\silence,~controlBus[playerIndex]["silenceBus"],
-				\freq,~controlBus[playerIndex]["freqBus"],
-				\hasFreq,~controlBus[playerIndex]["hasFreqBus"],
-				\onsets,~controlBus[playerIndex]["onsetsBus"],
-				\centroid,~controlBus[playerIndex]["centroidBus"],
-				\specFlatness,~controlBus[playerIndex]["specFlatnessBus"],
-				\density,~controlBus[playerIndex]["densityBus"],
-				\meanIOI,~controlBus[playerIndex]["meanIOIBus"],
-				\varianceIOI,~controlBus[playerIndex]["varianceIOIBus"],
-			);
-		});
-
-		Ndef(\switcher,\switcher).play;
-		Ndef(\switcher,\switcher).set(\inBus,~switcherBus,\outBus,~globalInBus);
-		Ndef(\globalOut,\globalOut).play;
-		Ndef(\globalOut).set(\inBus,~globalInBus,\thresh,~onsetThreshold,\outBus,~outBus,\compThresh,~compThreshGlobal)
+		switch(index,
+			0,{entry.fullPath.load},
+			1,{if(stereo,{entry.fullPath.load})},
+			2,{if(stereo.not,{entry.fullPath.load})},
+			3,{entry.fullPath.load},
+			4,{entry.fullPath.load},
+			5,{entry.fullPath.load},
+			6,{entry.fullPath.load},
+		);
 	});
-
-	"EIDOLON Ready!".postln;
-
 });
-)
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// STEP 6. EVALUATE THIS LINE TO START THE EIDOLON...
-~eidolon.play;
-//RECORD
-s.record(numChannels: ~numChannels)
+);
+
+// evaluate the following line to record the performance
+Server.default.record(numChannels: ~config[\numChannels]);
+
+~play.value;
