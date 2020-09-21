@@ -9,7 +9,6 @@ var numChannels = ~config[\numChannels];
 	// check the help file for Event Type and NodeProxy to make sure it doesn't do some weird shit...
 
 	// synths have to take busses as arguments!
-	// normalize all synth args!!
 	// need to also accomodate current_time...perhaps add this at the end!
 
 
@@ -19,9 +18,9 @@ var numChannels = ~config[\numChannels];
 			var sig1;
 
 			var sig = In.ar(\inBus.kr,1);
-			var trig = In.kr(~onsetsBus) + In.kr(~hasFreqBus);
+			var trig = In.kr(\trigIn.kr,1);
+			var rand = In.kr(\ctrlIn.kr,1) > 0;     // must check to see if this works!!!
 			var gate = EnvGen.ar(Env.sine(0.1),trig);
-			var rand = In.kr(~silenceBus);
 			rand = TExpRand.kr(0.05,0.3,rand);
 			sig = CombC.ar(sig*gate,0.6,rand,Select.kr(Trig1.kr(trig,rand-0.01),[inf,0]));
 			sig1 = DelayN.ar(sig,0.6,rand*7/5);
@@ -29,28 +28,28 @@ var numChannels = ~config[\numChannels];
 			sig * \amp.kr(0.7);
 		},
 
-		"percShiftDelay" -> {
-			var grainSize=1.0,freq,hasFreq;
-			var freqDev = In.kr(~varianceIOIBus).clip(0.6,1.2);
-			var maxDev = In.kr(~specFlatnessBus).clip(0.3,0.8);
+		"percShiftDelay" -> {      // need to rewrite/optimize this synth perhaps????  what has a trigger input??? freqDev = TRand() maybe?
+			var freq,hasFreq;
+			var freqDev = In.kr(~varianceIOIBus).linlin(0,1,0.6,1.2);
+			var maxDev = In.kr(~specFlatnessBus).linlin(0,1,0.3,0.8);
 			var	sig = In.ar(\inBus.kr,1);
 
 			sig = sig + LocalIn.ar(1);
 			#freq, hasFreq = Pitch.kr(sig, ampThreshold: 0.05, median: 7);
 			sig = sig*(1-hasFreq);
-			sig = PitchShift.ar(sig,grainSize,freqDev.clip(0.5,4.0),maxDev.clip(0.0,3.0),grainSize);
+			sig = PitchShift.ar(sig,grainSize,freqDev,maxDev,1.0);
 			sig = LeakDC.ar(sig);
 			LocalOut.ar(sig*0.7);
 			sig = Pan2.ar(sig,TRand.kr(-1.0,1.0,1-hasFreq).lag(maxDev),\amp.kr(1.0));
 		},
 
 		"fftFreeze" -> {
-			var chain;
-			var frames=4096;
+			var chain, frames=4096;
 
 			var	sig = In.ar(\inBus.kr,1);
-			var trig = In.kr(~onsetsBus) + In.kr(~hasFreqBus);
-			trig = Trig.kr(trig,TRand.kr(0.3,0.5,trig));
+			var trig = In.kr(\trigIn.kr,1);
+			trig = trig + In.kr(\ctrlIn.kr,1) > 0; // test this....
+			trig = Trig.kr(trig,TRand.kr(0.3,0.5,trig));                      //can this be cleaner also?
 			chain = FFT(LocalBuf(frames), sig, 0.5, 0, 1, frames);
 			chain = PV_Freeze(chain,trig);
 			sig = IFFT(chain);
@@ -63,31 +62,34 @@ var numChannels = ~config[\numChannels];
 	"pitchTrack" -> Dictionary
 	[
 		"ringMod" -> {
-			var dev = TExpRand.kr(0.01,4000,In.kr(~onsetsBus));
-			var gate = In.kr(~hasFreqBus);
+			var trig = In.kr(\trigIn.kr,1);
+			var dev = TExpRand.kr(0.01,4000,trig);
+			var gate = In.kr(\ctrlIn.kr,1);    // this needs to be checked as well...this is essentially an envelope follower!
 			var sig = (In.ar(\inBus.kr,1))*gate;
-			var mod = SinOsc.ar(In.kr(~freqBus)*2*SinOsc.ar(dev).range(0.75,0.75.reciprocal));
+			var mod = SinOsc.ar(In.kr(~freqBus)*2*SinOsc.ar(dev).range(0.75,0.75.reciprocal)); //this needs to be able to take [~busses[playerIndex] as well]
 			sig = sig*mod;
 			sig = Pan2.ar(sig,LFNoise2.kr(0.2));
 		},
 
-		"pitchShift" -> {
+		"pitchShift" -> {                          //test this one as well...can it be more interesting???
 			var grainSize=0.15,maxDev,sig;
+			var trig = In.kr(\trigIn.kr,1);
+			var devFreq = In.kr(\ctrlIn.kr,1);
 
 			var	freqDev = Drand([7/8,8/7,8/9,9/8,9/10,10/9],inf);
-			freqDev = Demand.kr(Dust.kr(In.kr(~specFlatnessBus)*5),0,freqDev);
-			maxDev = SinOsc.kr(In.kr(~varianceIOIBus)).clip(0.01,0.05);
+			freqDev = Demand.kr(trig,0,freqDev);
+			maxDev = SinOsc.kr(devFreq).range(0.01,0.05);
 			sig = In.ar(\inBus.kr,1);
 			sig = PitchShift.ar(sig,grainSize,freqDev,maxDev,grainSize);
 			sig = Pan2.ar(sig,LFNoise2.kr(0.2));
 		},
 
 		"bitz" -> {
-			var rate = In.kr(~freqBus);
-			var bits = In.kr(~specFlatnessBus);
+			var rate = In.kr(\trigIn.kr,1);    // have to figure out a way to make a trigger into a control signal...PulseCount? Phasor w/ reset?
+			var bits = In.kr(\ctrlIn.kr,1);
 
 			var sig = In.ar(\inBus.kr,1);
-			sig = Decimator.ar(sig,SampleRate.ir * rate.explin(20,20000,0.05,1.0), 24 * bits.clip(0.05,1.0));    //add limiter???
+			sig = Decimator.ar(sig,SampleRate.ir * rate.linlin(0,1,0.05,1.0), 24 * bits.linlin(0,1,0.05,1.0));    //add limiter??? or amplitude scaling related to bits?
 			sig = Pan2.ar(sig,LFNoise2.kr(0.2).range(-0.8,0.8),\amp.kr(0.3));
 		},
 	],
@@ -107,14 +109,17 @@ var numChannels = ~config[\numChannels];
 			sig = LeakDC.ar(sig);
 			sig = sig * \amp.kr(0.08);
 		},
+
+		// need more here!!!
 	],
 ];
 
 ~bufTransforms = Dictionary[
 	"bufGlitch" -> {
 		var bufnum = \bufnum.kr;
+		var ??? = In.kr(\trigIn.kr,1);  // what goes here?
+		var freq = In.kr(\ctrlIn.kr,1).linlin(0,1,0.6,1.0);
 
-		var freq = (In.kr(~specFlatnessBus)).clip(0.6,1.0);
 		var bufFr = BufFrames.kr(bufnum)-1;
 		var pointer = LFDNoise1.ar(freq).range(0,bufFr);
 		var sig = BufRd.ar(1,bufnum,pointer,1);
@@ -124,9 +129,9 @@ var numChannels = ~config[\numChannels];
 
 	"bufStutter" -> {
 		var bufnum = \bufnum.kr;
+		var speed = In.kr(\ctrlIn.kr,1).linlin(0,1,0.6,1.0);
+		var rate = TExpRand.kr(0.7,1.1,In.kr(\trigIn.kr,1));
 
-		var rate = TExpRand.kr(0.7,1.1,In.kr(~silenceBus));
-		var speed = In.kr(~hasFreqBus).clip(1.0,6.0);
 		var bufFr = BufFrames.kr(bufnum)-1;
 		var trig = Impulse.kr(speed.lag(0.5));
 		var pointer = Phasor.ar(0,0.05,0,bufFr);
@@ -138,8 +143,10 @@ var numChannels = ~config[\numChannels];
 
 	"bufAMRing" -> {
 		var bufnum = \bufnum.kr;
+		var trig = In.kr(\trigIn.kr,1);
+		var freq = In.kr(\ctrlIn.kr,1).linexp(0,1,0.1,1200);
 
-		var ringfreq = Latch.kr(In.kr(~centroidBus),Impulse.kr(0.8));
+		var ringfreq = Latch.kr(freq,trig);
 		var modfreq = 7;
 		var car = BufRd.ar(1,bufnum,LFTri.ar((BufDur.ir(bufnum).reciprocal)*LFNoise2.kr(0.5).range(0.6,0.8)).range(0, BufFrames.ir(bufnum)),1);
 		var mod = LFPulse.ar(modfreq*LFNoise2.kr(2).range(0.2,2.0),0,LFNoise0.ar(4).range(0.3,0.8)).abs;
@@ -149,27 +156,32 @@ var numChannels = ~config[\numChannels];
 		sig = Pan2.ar(sig,LFNoise2.kr(0.2));
 	},
 
-	"tGrainz" -> {  //this should perhaps copy the monome grainer model?
+	"tGrainz" -> {{
 		var bufnum = \bufnum.kr;
-		var sig,rate,trig,pointer,posDif=0.5,posLo,posDev=0.03,bufSection,bufDur,grainDur=1.2;
+		var trigRate = TRand.kr(0.3,12.0,In.kr(\trigIn.kr,1));   // is this the best solution?
+		var rate = In.kr(\ctrlIn.kr,1).linexp(0,1,2.0,0.5);
 
-		trig = In.kr(~silenceBus);
-		rate = Latch.kr(In.kr(~specFlatnessBus),trig);
-		bufDur = BufDur.kr(bufnum);
-		posLo = TRand.kr(0.0,0.5,In.kr(~hasFreqBus));
-		bufSection = bufDur * posDif;
-		pointer = posLo * bufDur +
-		(Phasor.ar(trig, BufRateScale.kr(bufnum) / SampleRate.ir,posLo * bufDur,(posLo + posDif) * bufDur)
-			+
-			(TRand.kr(-0.5 * posDev, 0.5 * posDev, trig) * bufDur)).mod(bufSection);
+		var sig;
+		var bufRate = BufRateScale.kr(bufnum);
 
-		sig = TGrains.ar(2,trig,bufnum,rate.clip(0.6,2.0).neg,pointer,grainDur,Latch.kr(LFNoise2.kr(40),trig),\amp.kr(0.8));
+		var noise = trigRate.linexp(0.3,12.0,0.2,0.001);
+		var trig = Impulse.kr(trigRate);
+
+		var bufDur = BufDur.kr(bufnum);
+		var offset = Rand(0,bufDur);
+		var pointer = Phasor.kr(0,ControlDur.ir * 0.08,0,bufDur);
+		pointer = pointer + Latch.kr(LFNoise1.kr(12,noise,offset),trig);
+
+		sig = TGrains.ar(2,trig,bufnum,bufRate * rate.neg,(pointer % bufDur).poll,1.5,Latch.kr(LFNoise2.kr(0.1),trig),\amp.kr(0.8));
 	},
 ]
 );
 
+/*          below here             */
+
+
 (
-SynthDef(\inPlayer,{
+SynthDef(\inPlayer,{   // should this be normalized? Or rather, where should the scaling happen...users will input in Hz for filterFreqs, why convert?
 	var sig = SoundIn.ar(\inBus.kr);
 
 	sig = BHiShelf.ar(sig,\filtFreqHi.kr(2000),\rsHi.kr(0.25),0);
@@ -196,21 +208,21 @@ SynthDef(\analyser, {
 	var time = Sweep.ar;
 	var trig = Impulse.kr(\trigRate.kr(4));
 
-	# density, meanIOI, varianceIOI = OnsetStatistics.kr(onsets,3.0);
+	# density, meanIOI, varianceIOI = OnsetStatistics.kr(onsets,3.0);     // window size is variable? Relates to \sensitivity somewhere?
 	# freq, hasFreq = Pitch.kr(LPF.ar(sig,2000), ampThreshold: 0.01, median: 7);
 
 	SendReply.kr(trig, '/analysis', [amp,silence,freq,hasFreq,onsets,centroid,specFlatness,density,meanIOI,varianceIOI,time]);
 
 	Out.kr(\ampBus.kr,amp);
 	Out.kr(\silenceBus.kr,silence);
-	Out.kr(\freqBus.kr,freq);
+	Out.kr(\freqBus.kr,freq.explin(20,20000,0.0,1.0));  // is it reasonable to map from 20 - 20kHz? Many of those octaves will never be heard/played..should this be learned by calibration?
 	Out.kr(\hasFreqBus.kr,hasFreq);
 	Out.kr(\onsetsBus.kr,onsets);
-	Out.kr(\centroidBus.kr,centroid);
+	Out.kr(\centroidBus.kr,centroid.explin(20,20000,0.0,1.0)); // same concern as above...
 	Out.kr(\specFlatnessBus.kr,specFlatness);
-	Out.kr(\densityBus.kr,density);
-	Out.kr(\meanIOIBus.kr,meanIOI);
-	Out.kr(\varianceIOIBus.kr,varianceIOI);
+	Out.kr(\densityBus.kr,density); // how to map this to 0-1? 0 is obviously lower bound, perhaps upper bound needs to be part of calibration process as well?
+	Out.kr(\meanIOIBus.kr,meanIOI); // same concern as above...
+	Out.kr(\varianceIOIBus.kr,varianceIOI); // same concern as above...
 
 }).add;
 
@@ -219,7 +231,7 @@ SynthDef(\switcher,{
 	Out.ar(\outBus.kr,sig);
 }).add;
 
-SynthDef(\globalOut,{
+SynthDef(\globalOut,{                                            // all of these are the same as above
 	var freq,hasFreq,density,meanIOI,varianceIOI;
 
 	var in = In.ar(\inBus.kr,numChannels);
@@ -266,8 +278,8 @@ SynthDef(\snowSines, {
 	var freq = \freq.kr;
 
 	var env = EnvGen.kr(Env([0,1,0],[\atk.kr,\rls.kr]),\gate.kr(1),doneAction: 2);
-	var sig = SinOsc.ar(freq)*BrownNoise.ar(0.5,0.5);
-	sig = RLPF.ar(sig,freq*1.5,rq,1/rq.sqrt);  // weird amp function...I don't like it.
+	var sig = SinOsc.ar(freq) * BrownNoise.ar(0.5,0.5);
+	sig = RLPF.ar(sig,freq*1.5,rq,1/rq.sqrt);                                            // weird amp function...I don't like it.
 	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr * 0.7);
 	sig = sig * env;
 	Out.ar(\outBus.kr,sig);
@@ -275,9 +287,9 @@ SynthDef(\snowSines, {
 }).add;
 
 SynthDef(\screech,{
-	var sig = SinOsc.ar(\freq.kr(80)) * Trig.kr(\trig.kr(1),0.04);
-	sig = CombC.ar(sig,0.04,0.04*LFNoise0.ar(50).abs,6.0,1);
-	sig = Limiter.ar(sig,1.0);
+	var sig = SinOsc.ar(\freq.kr(80)) * Trig.kr(\trig.kr(1),0.04);                       //do I need this \trig.kr?
+	sig = CombC.ar(sig,0.04,0.04 * LFNoise0.ar(50).abs,6.0);
+	sig = Limiter.ar(sig,1.0);                                                           //can I scale the amp instead of using a Limiter?
 	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr(0.8));
 	sig = LeakDC.ar(sig);
 	DetectSilence.ar(sig,doneAction:2);
@@ -286,7 +298,6 @@ SynthDef(\screech,{
 }).add;
 
 SynthDef(\freezeBells,{
-
 	var ramp = Line.ar(-1.0,-0.001,ExpRand(8.0,14.0),doneAction: 2);
 	var sig = In.ar(\inBus.kr,1);
 	var chain = FFT(LocalBuf(1024),sig);
@@ -307,7 +318,7 @@ SynthDef(\clicks,{
 	var env = EnvGen.kr(Env.new([0.01,1,0.01],[0.05,0.5],\exp),1,timeScale:ts.clip(2,20),doneAction: 2);
 	var pan = LinRand(-1,1);
 	var sig = osc*osc+osc;
-	sig = BLowPass.ar(sig,8000*env.lag(ts * 0.8),env.reciprocal / 4);
+	sig = BLowPass.ar(sig,8000 * env.lag(ts * 0.8),env.reciprocal / 4);                   // what the fuck is all this nonsense?
 	sig = Pan2.ar(sig * env,Line.kr(pan,pan.neg,ts / 4));
 	sig = LeakDC.ar(sig);
 	Out.ar(\outBus.kr,sig * \amp.kr(0.1));

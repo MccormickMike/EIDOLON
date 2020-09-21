@@ -11,7 +11,7 @@ var numPlayers = ~config[\numPlayers];
 
 ~audioBus = Dictionary[
 
-	"analyserIn" -> Array.fill(numPlayers,{Bus.audio(server,numChannels)}),
+	"analyserIn" -> Array.fill(numPlayers,{Bus.audio(server,1)}),
 
 	"switcherBus" -> Bus.audio(server,numChannels),
 	"globalInBus" -> Bus.audio(server,numChannels),

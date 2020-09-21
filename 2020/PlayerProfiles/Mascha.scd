@@ -1,11 +1,10 @@
 /* ------ Mascha ------ */
 
 (
-
 //this also needs to change..make into a dictionary or something???
 
 // hardware
-~players.add(  //  where is this dictionary???
+~players.add(
 
 	"Mascha" -> (
 		inBus: 0,

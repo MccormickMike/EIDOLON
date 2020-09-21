@@ -149,21 +149,23 @@ var numChannels = ~config[\numChannels];
 		sig = Pan2.ar(sig,LFNoise2.kr(0.2));
 	},
 
-	"tGrainz" -> {  //this should perhaps copy the monome grainer model?
+	"tGrainz" -> {
 		var bufnum = \bufnum.kr;
-		var sig,rate,trig,pointer,posDif=0.5,posLo,posDev=0.03,bufSection,bufDur,grainDur=1.2;
+		var sig;
 
-		trig = In.kr(~controlBus[0]["silenceBus"]);
-		rate = Latch.kr(In.kr(~controlBus[0]["specFlatnessBus"]),trig);
-		bufDur = BufDur.kr(bufnum);
-		posLo = TRand.kr(0.0,0.5,In.kr(~controlBus[0]["hasFreqBus"]));
-		bufSection = bufDur * posDif;
-		pointer = posLo * bufDur +
-		(Phasor.ar(trig, BufRateScale.kr(bufnum) / SampleRate.ir,posLo * bufDur,(posLo + posDif) * bufDur)
-			+
-			(TRand.kr(-0.5 * posDev, 0.5 * posDev, trig) * bufDur)).mod(bufSection);
+		var rate = In.kr(~controlBus[0]["specFlatnessBus"]).linexp(0,1,0.5,2.0);
+		var bufRate = BufRateScale.kr(bufnum);
 
-		sig = TGrains.ar(2,trig,bufnum,rate.clip(0.6,2.0).neg,pointer,grainDur,Latch.kr(LFNoise2.kr(40),trig),\amp.kr(0.8));
+		var trigRate = In.kr(~controlBus[0]["densityBus"]).linlin(12,1,0.3,12.0);
+		var noise = trigRate.linexp(0.3,12.0,0.2,0.001);                // this must change when I normalize all bus inputs!!
+		var trig = Impulse.kr(trigRate);
+
+		var bufDur = BufDur.kr(bufnum);
+		var offset = Rand(0,bufDur);
+		var pointer = Phasor.kr(0,ControlDur.ir * 0.08,0,bufDur);
+		pointer = pointer + Latch.kr(LFNoise1.kr(12,noise,offset),trig);
+
+		sig = TGrains.ar(2,trig,bufnum,bufRate * rate.neg,(pointer % bufDur),1.5,Latch.kr(LFNoise2.kr(0.1),trig),\amp.kr(0.8));
 	},
 ]
 );

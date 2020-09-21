@@ -4,10 +4,10 @@
 var server = Server.default;
 var options = server.options;
 
-options.numInputBusChannels = 10;
-options.numOutputBusChannels = 10;
+options.numInputBusChannels = 2;
+options.numOutputBusChannels = 2;
 options.memSize = 2**20;
-options.sampleRate = 48000;
+options.sampleRate = 44100;
 
 // Choose Device
 // options.device = "Scarlett 2i2 USB"
