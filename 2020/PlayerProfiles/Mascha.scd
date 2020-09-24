@@ -12,6 +12,7 @@
 
 		compThresh: 0.5, // compressor threshold between 0.0 and 1.0 for inputs
 		onsetThreshold: 0.18, // value between 0.0 and 1.0, depends on instrument, microphone, etc.
+		silenceThreshold: 0.01,
 		pollRate: 4,
 
 		pan: 0,
@@ -26,3 +27,4 @@
 
 "Profile \"Mascha\" loaded".postln;
 )
+

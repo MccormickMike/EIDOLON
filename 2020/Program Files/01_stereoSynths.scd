@@ -38,7 +38,7 @@ var numChannels = ~config[\numChannels];
 			sig = sig + LocalIn.ar(1);
 			#freq, hasFreq = Pitch.kr(sig, ampThreshold: 0.05, median: 7);
 			sig = sig*(1-hasFreq);
-			sig = PitchShift.ar(sig,grainSize,freqDev.clip(0.5,4.0),maxDev.clip(0.0,3.0),grainSize);
+			sig = PitchShift.ar(sig,grainSize,freqDev,maxDev,grainSize);
 			sig = LeakDC.ar(sig);
 			LocalOut.ar(sig*0.7);
 			sig = Pan2.ar(sig,TRand.kr(-1.0,1.0,1-hasFreq).lag(maxDev),\amp.kr(1.0));
@@ -55,6 +55,21 @@ var numChannels = ~config[\numChannels];
 			chain = PV_Freeze(chain,trig);
 			sig = IFFT(chain);
 			sig = Pan2.ar(sig*trig,TRand.kr(-1.0,1.0,trig),\amp.kr(1.0));
+		},
+
+		"shiftDelay" -> {
+			var speed = In.kr(~controlBus[0]["specFlatnessBus"]).linexp(0.0,1.0,0.05,7);
+			var delay = In.kr(~controlBus[0]["densityBus"]).linexp(0.0,12.0,0.3,1.5);
+			var trig = In.kr(~controlBus[0]["silenceBus"]);
+
+			var sig = In.ar(\inBus.kr,1);
+			var mute = ToggleFF.kr(trig);
+
+			var local = LocalIn.ar(2);
+			sig = DelayC.ar((sig*(1-mute))+local,1.5,LFNoise1.ar(speed!2).range(0.2,delay));
+			LocalOut.ar((sig.reverse)*Select.kr(mute,[0.75,1]));
+			sig = LeakDC.ar(sig);
+			sig = Splay.ar(sig,0.5,\amp.kr(0.3));
 		},
 	],
 
@@ -87,7 +102,7 @@ var numChannels = ~config[\numChannels];
 			var bits = In.kr(~controlBus[0]["specFlatnessBus"]);
 
 			var sig = In.ar(\inBus.kr,1);
-			sig = Decimator.ar(sig,SampleRate.ir * rate.explin(20,20000,0.05,1.0), 24 * bits.clip(0.05,1.0));    //add limiter???
+			sig = Decimator.ar(sig,SampleRate.ir * rate.explin(20,20000,0.05,0.2), 24 * bits.linlin(0,1.0,0.05,0.5));    //add limiter???
 			sig = Pan2.ar(sig,LFNoise2.kr(0.2).range(-0.8,0.8),\amp.kr(0.3));
 		},
 	],
@@ -106,6 +121,32 @@ var numChannels = ~config[\numChannels];
 			sig = BLowPass4.ar(sig,\filt.kr(8000),\rq.kr(1));
 			sig = LeakDC.ar(sig);
 			sig = sig * \amp.kr(0.08);
+		},
+
+		"bitShift" -> {
+			var freq = In.kr(~controlBus[0]["specFlatnessBus"]).linlin(0,1.0,0.1,8.0);
+			var counter = In.kr(~controlBus[0]["silenceBus"]).linlin(0,1.0,1,10);
+			var sr = SampleRate.ir/ \sampleRate.kr(12);
+			var n = 12;     // bit resolution: bits.clip(12,24);
+			var t= Phasor.ar(1,freq*((2**n)/sr),0,((2**n)-1));
+
+			counter = LFNoise0.kr(counter).range(0,7).floor;
+
+			t = Select.ar(counter,[
+
+				t*(((t>>64)|(t>>8))&(63&(t>>4))),
+				t*(((t>>9)|(t>>13))&(25&(t>>6))),
+				t*(((t>>5)|(t>>8)) & 63),
+				t*(((t>>11)&(t>>8))&(123&(t>>3))),
+				t*(t>>8*((t>>15)|(t>>8))&(20|(t>>19)*5>>t|(t>>3))),
+				t*(t>>((t>>9)|(t>>8))&(63&(t>>4))),
+				(t>>7|t|t>>6)*10+4*(t&t>>13|t>>6)
+			]);
+
+			t = t % (2**(n));
+			t = t*(0.5**(n-1)) - 1; //scaling to -1, 1
+			t = Pan2.ar(t,Latch.kr(LFNoise2.kr(0.4).range(-0.8,0.8),Changed.kr(A2K.kr(t))),\amp.kr(0.1));
+			t = LeakDC.ar(t);
 		},
 	],
 ];
@@ -126,7 +167,7 @@ var numChannels = ~config[\numChannels];
 		var bufnum = \bufnum.kr;
 
 		var rate = TExpRand.kr(0.7,1.1,In.kr(~controlBus[0]["silenceBus"]));
-		var speed = In.kr(~controlBus[0]["hasFreqBus"]).clip(1.0,6.0);
+		var speed = In.kr(~controlBus[0]["hasFreqBus"]).linlin(0,1.0,1.0,6.0);
 		var bufFr = BufFrames.kr(bufnum)-1;
 		var trig = Impulse.kr(speed.lag(0.5));
 		var pointer = Phasor.ar(0,0.05,0,bufFr);
@@ -174,7 +215,7 @@ var numChannels = ~config[\numChannels];
 SynthDef(\inPlayer,{
 	var sig = SoundIn.ar(\inBus.kr);
 
-	sig = BHiShelf.ar(sig,\filtFreqHi.kr(2000),\rsHi.kr(0.25),0);
+	sig = BHiShelf.ar(sig,\filtFreqHi.kr(3000),\rsHi.kr(0.5),0);
 	sig = BLowShelf.ar(sig,\filtFreqLo.kr(80),\rsLo.kr(0.25),0);
 	sig = Compander.ar(sig,sig,\compThresh.kr(0.5),1,0.5,0.01,0.01);
 	Out.ar(\analyserOut.kr,sig);
@@ -189,9 +230,9 @@ SynthDef(\analyser, {
 	var sig = In.ar(\inBus.kr,1);
 
 	var amp = Amplitude.kr(sig);
-	var silence = DetectSilence.ar(sig + Impulse.ar(0),0.01);
+	var silence = DetectSilence.ar(sig + Impulse.ar(0),\silenceThresh.kr(0.01));
 	var chain = FFT(LocalBuf(\frames.kr(1024)),sig);
-	var onsets = Onsets.kr(chain,\thresh.kr, \rcomplex);
+	var onsets = Onsets.kr(chain,\onsetThresh.kr, \rcomplex);
 	var centroid = SpecCentroid.kr(chain);
 	var specFlatness = SpecFlatness.kr(chain);
 
@@ -217,7 +258,11 @@ SynthDef(\analyser, {
 }).add;
 
 SynthDef(\switcher,{
-	var sig = In.ar(\inBus.kr,numChannels);
+	var in = In.ar(\inBus.kr,numChannels);
+	var sig = FreeVerb.ar(in,1,100,\damp.kr(0.5));
+	sig = HPF.ar(sig,250);
+	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
+	sig = XFade2.ar(in,sig,\mix.kr(0.05) * 2 - 1);
 	Out.ar(\outBus.kr,sig);
 }).add;
 
@@ -228,9 +273,9 @@ SynthDef(\globalOut,{
 	var sig = Mix(in);
 
 	var amp = Amplitude.kr(sig);
-	var silence = DetectSilence.ar(sig + Impulse.ar(0),0.01);
+	var silence = DetectSilence.ar(sig + Impulse.ar(0),\silenceThresh.kr(0.01));
 	var chain = FFT(LocalBuf(\frames.kr(1024)),sig);
-	var onsets = Onsets.kr(chain,\thresh.kr, \rcomplex);
+	var onsets = Onsets.kr(chain,\onsetThresh.kr, \rcomplex);
 	var centroid = SpecCentroid.kr(chain);
 	var specFlatness = SpecFlatness.kr(chain);
 
@@ -257,6 +302,7 @@ SynthDef(\recorder,{
 SynthDef(\reverb,{
 	var sig = In.ar(\inBus.kr,1);
 	sig = FreeVerb.ar(sig,1,100,\damp.kr(0.4));
+	sig = HPF.ar(sig,250);
 	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
 	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr(0.8));
 	Out.ar(\outBus.kr,sig);
@@ -306,13 +352,26 @@ SynthDef(\clicks,{
 	var ts = \ts.kr;
 
 	var osc = SinOscFB.ar([freq,freq*1.005],\feedback.kr);
-	var env = EnvGen.kr(Env.new([0.01,1,0.01],[0.05,0.5],\exp),1,timeScale:ts.clip(2,20),doneAction: 2);
-	var pan = LinRand(-1,1);
+	var env = EnvGen.kr(Env.perc(),1,timeScale:ts,doneAction: 2);
+	var pan = IRand(-1,1);
 	var sig = osc*osc+osc;
-	sig = BLowPass.ar(sig,8000*env.lag(ts * 0.8),env.reciprocal / 4);
-	sig = Pan2.ar(sig * env,Line.kr(pan,pan.neg,ts / 4));
+	sig = LPF.ar(sig*env,8000);
 	sig = LeakDC.ar(sig);
-	Out.ar(\outBus.kr,sig * \amp.kr(0.1));
+	sig = Balance2.ar(sig[0],sig[1],Line.kr(pan,pan.neg,ts),\amp.kr(0.1));
+	Out.ar(\outBus.kr,sig);
+
+}).add;
+
+SynthDef(\tester,{
+
+	var sig = In.ar(\inBus.kr,1);
+	// var sig = SoundIn.ar(0);
+	var silence = DetectSilence.ar(sig + Impulse.ar(0),\silenceThresh.kr(0.1));
+	var chain = FFT(LocalBuf(\frames.kr(1024)),sig);
+	var onsets = Onsets.kr(chain,\onsetThresh.kr, \rcomplex);
+
+	SendReply.kr(Impulse.kr(20),'/silenceReply',[silence]);
+	SendReply.kr(Impulse.kr(20),'/onsetReply',[onsets]);
 
 }).add;
 

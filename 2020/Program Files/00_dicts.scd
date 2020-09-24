@@ -82,6 +82,7 @@ var numPlayers = ~config[\numPlayers];
 );
 
 ~recorder = Array.fill(numPlayers,{0});
+~calibrating = false;
 
 "Data file loaded".postln;
 

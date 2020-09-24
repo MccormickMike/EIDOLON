@@ -5,7 +5,7 @@ var server = Server.default;
 var options = server.options;
 
 options.numInputBusChannels = 2;
-options.numOutputBusChannels = 2;
+options.numOutputBusChannels = 8;
 options.memSize = 2**20;
 options.sampleRate = 44100;
 
@@ -38,6 +38,7 @@ server.waitForBoot({
 			5,{entry.fullPath.load},
 			6,{entry.fullPath.load},
 			7,{entry.fullPath.load},
+			8,{entry.fullPath.load},
 		);
 	});
 });
@@ -49,3 +50,5 @@ Server.default.record(numChannels: ~config[\numChannels]);
 
 ~play.value;
 ~stop.value
+
+Ndef(\analyser0).inspect

@@ -177,7 +177,7 @@ var numChannels = ~config[\numChannels];
 ]
 );
 
-/*          below here             */
+/*         check below here             */
 
 
 (
@@ -199,9 +199,9 @@ SynthDef(\analyser, {
 	var sig = In.ar(\inBus.kr,1);
 
 	var amp = Amplitude.kr(sig);
-	var silence = DetectSilence.ar(sig + Impulse.ar(0),0.01);
+	var silence = DetectSilence.ar(sig + Impulse.ar(0),\silenceThresh.kr(0.01));
 	var chain = FFT(LocalBuf(\frames.kr(1024)),sig);
-	var onsets = Onsets.kr(chain,\thresh.kr, \rcomplex);
+	var onsets = Onsets.kr(chain,\onsetThresh.kr, \rcomplex);
 	var centroid = SpecCentroid.kr(chain);
 	var specFlatness = SpecFlatness.kr(chain);
 
@@ -227,20 +227,24 @@ SynthDef(\analyser, {
 }).add;
 
 SynthDef(\switcher,{
-	var sig = In.ar(\inBus.kr,numChannels);
+	var in = In.ar(\inBus.kr,numChannels);
+	var sig = FreeVerb.ar(in,1,100,\damp.kr(0.5));
+	sig = HPF.ar(sig,250);
+	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
+	sig = XFade2.ar(in,sig,\mix.kr(0.05) * 2 - 1);
 	Out.ar(\outBus.kr,sig);
 }).add;
 
-SynthDef(\globalOut,{                                            // all of these are the same as above
+SynthDef(\globalOut,{                                            // same concerns as above
 	var freq,hasFreq,density,meanIOI,varianceIOI;
 
 	var in = In.ar(\inBus.kr,numChannels);
 	var sig = Mix(in);
 
 	var amp = Amplitude.kr(sig);
-	var silence = DetectSilence.ar(sig + Impulse.ar(0),0.01);
+	var silence = DetectSilence.ar(sig + Impulse.ar(0),\silenceThresh.kr(0.01));
 	var chain = FFT(LocalBuf(\frames.kr(1024)),sig);
-	var onsets = Onsets.kr(chain,\thresh.kr, \rcomplex);
+	var onsets = Onsets.kr(chain,\onsetThresh.kr, \rcomplex);
 	var centroid = SpecCentroid.kr(chain);
 	var specFlatness = SpecFlatness.kr(chain);
 
@@ -286,10 +290,11 @@ SynthDef(\snowSines, {
 
 }).add;
 
-SynthDef(\screech,{
-	var sig = SinOsc.ar(\freq.kr(80)) * Trig.kr(\trig.kr(1),0.04);                       //do I need this \trig.kr?
-	sig = CombC.ar(sig,0.04,0.04 * LFNoise0.ar(50).abs,6.0);
-	sig = Limiter.ar(sig,1.0);                                                           //can I scale the amp instead of using a Limiter?
+SynthDef(\screech,{                       //change the arguments coming from the OSCdef!!
+	var env = EnvGen.kr(Env.perc(),1,timeScale:0.04);
+	var sig = WhiteNoise.ar(1) * env;
+	sig = CombC.ar(sig,0.02,0.02 * LFNoise0.ar(50).range(0.01,1.0),6.0);
+	sig = Limiter.ar(sig,1.0);
 	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr(0.8));
 	sig = LeakDC.ar(sig);
 	DetectSilence.ar(sig,doneAction:2);
@@ -315,15 +320,18 @@ SynthDef(\clicks,{
 	var ts = \ts.kr;
 
 	var osc = SinOscFB.ar([freq,freq*1.005],\feedback.kr);
-	var env = EnvGen.kr(Env.new([0.01,1,0.01],[0.05,0.5],\exp),1,timeScale:ts.clip(2,20),doneAction: 2);
-	var pan = LinRand(-1,1);
+	var env = EnvGen.kr(Env.perc(),1,timeScale:ts,doneAction: 2);
+	var pan = IRand(-1,1);
 	var sig = osc*osc+osc;
-	sig = BLowPass.ar(sig,8000 * env.lag(ts * 0.8),env.reciprocal / 4);                   // what the fuck is all this nonsense?
-	sig = Pan2.ar(sig * env,Line.kr(pan,pan.neg,ts / 4));
+	sig = LPF.ar(sig*env,8000);
 	sig = LeakDC.ar(sig);
-	Out.ar(\outBus.kr,sig * \amp.kr(0.1));
+	sig = Balance2.ar(sig[0],sig[1],Line.kr(pan,pan.neg,ts),\amp.kr(0.1));
+	Out.ar(\outBus.kr,sig);
 
 }).add;
+
+// Synth(\clicks,[\ts,1.exprand(4.0),\freq,0.001.exprand(0.01),\feedback,60,\amp,0.1]);
+
 
 );
 

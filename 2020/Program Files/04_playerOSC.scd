@@ -4,7 +4,7 @@
 
 (
 var players = ~config[\playerProfiles];
-var waitBeforeStartTime = ~config[\waitBeforeStartTime];
+var waitBeforeStartTime = ~config[\waitBeforeStartTime].clip(1,inf);
 var performanceLength = ~config[\performanceLength];
 var numChannels = ~config[\numChannels];
 var numPlayers = ~config[\numPlayers];
@@ -18,7 +18,7 @@ players.do({
 	var maxVoices = 3; // degree of polyphony
 	var minPhraseLength = 45; // 60 seconds
 	var memoryScale = ~players.asArray[playerIndex][\pollRate]; // this probably needs to change at some point as well...
-	var memLength = memoryScale * 6; // 6 seconds
+	var memLength = memoryScale * 4; // 6 seconds
 
 	OSCdef("listener%".format(playerIndex).asSymbol, {
 		arg msg;
@@ -56,38 +56,39 @@ players.do({
 		var state;
 		var fadeTime = 0.8;
 
-		if(verbose,{
-			"\rPLAYER: %
-current_amp: % \rrecent_amp: % \rcurrent_silence: % \rrecent_silence: % \rcurrent_freq: % \rrecent_freq: % \rcurrent_hasFreq: % \rrecent_hasFreq: % \ronsets: % \rcurrent_centroid: % \rrecent_centroid: %
-current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_density: % \rcurrent_meanIOI: % \rrecent_meanIOI: % \rcurrent_varianceIOI: % \rrecent_varianceIOI: % \rcurrent_time: %"
-			.format(profileName,current_amp,recent_amp,current_silence,recent_silence,current_freq,recent_freq,current_hasFreq,recent_hasFreq,onsets,current_centroid,recent_centroid,current_specFlatness,recent_specFlatness,current_density,recent_density,current_meanIOI,recent_meanIOI,current_varianceIOI,recent_varianceIOI,current_time).postln;
-		});
-
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//determine state!!!!
 
 		case
 		{current_time < waitBeforeStartTime}{state = "tacet"} // tacet
 		// {current_time > waitBeforeStartTime}{state = "support"} // just for testing....
-		{current_time > waitBeforeStartTime and: {current_time < performanceLength}}
+		{current_time > waitBeforeStartTime and: {current_time < (performanceLength + waitBeforeStartTime)}}
 		{
-			if((current_time - waitBeforeStartTime) < (performanceLength * 0.08 ),{ // relative to performanceLength?
+			if((current_time - waitBeforeStartTime) < (performanceLength * 0.08),{ // relative to performanceLength?
 				state = "ignore";
 			},{
-				if(~memory[playerIndex]["state"].indicesOfEqual(~memory[playerIndex]["state"].first).last % (memoryScale * performanceLength * 0.1) == 0,{ // minimum state length: 3 minutes...or also related to performance length?
+				if(~memory[playerIndex]["state"].indicesOfEqual(~memory[playerIndex]["state"].first).last % (memoryScale * performanceLength * 0.1) == 0,{ // minimum state length: related to performanceLength or fixed?
 					case
-					{~memory[playerIndex]["state"][0] == "ignore"}{state = ["support","ignore"].wchoose([0.85,0.15])}
-					{~memory[playerIndex]["state"][0] == "support"}{state = ["support","tacet"].wchoose([0.85,0.15])}
-					// {~memory[playerIndex]["state"][0] == "contrast"}{state = ["contrast","ignore"].wchoose([0.65,0.35])}
-					{~memory[playerIndex]["state"][0] == "tacet"}{state = ["support","ignore"].wchoose([0.75,0.25])}
+					{~memory[playerIndex]["state"].first == "ignore"}{state = ["support","ignore"].wchoose([0.85,0.15])}
+					{~memory[playerIndex]["state"].first == "support"}{state = ["support","tacet"].wchoose([0.85,0.15])}
+					// {~memory[playerIndex]["state"].first == "contrast"}{state = ["contrast","ignore"].wchoose([0.65,0.35])}
+					{~memory[playerIndex]["state"].first == "tacet"}{state = ["support","ignore"].wchoose([0.75,0.25])}
 				},{
-					state = ~memory[playerIndex]["state"][0];
+					state = ~memory[playerIndex]["state"].first;
 				});
 			});
 		}
 		{current_time >= performanceLength}{state = "tacet"}; // this could also call some other fucntion that neatly wraps up the performance?
 
-		state.postln;
+		if(verbose,{
+			"\rPLAYER: %
+current_amp: % \rrecent_amp: % \rcurrent_silence: % \rrecent_silence: % \rcurrent_freq: % \rrecent_freq: % \rcurrent_hasFreq: % \rrecent_hasFreq: % \ronsets: % \rcurrent_centroid: % \rrecent_centroid: %
+current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_density: % \rcurrent_meanIOI: % \rrecent_meanIOI: % \rcurrent_varianceIOI: % \rrecent_varianceIOI: % \rcurrent_time: %"
+			.format(profileName,current_amp,recent_amp,current_silence,recent_silence,current_freq,recent_freq,current_hasFreq,recent_hasFreq,onsets,current_centroid,recent_centroid,current_specFlatness,recent_specFlatness,current_density,recent_density,current_meanIOI,recent_meanIOI,current_varianceIOI,recent_varianceIOI,current_time).postln;
+
+			state.postln;
+		});
+
 
 		//determine fadeTime!!!!...maybe this is determined by state?
 
@@ -150,30 +151,28 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 				})
 			});
 
+			//"fillSilence"       // change this definition -> something about leading vs. following, coming with new ideas, etc. and shape the conditions accordingly
 
-			//"fillSilence"              // change this definition -> something about leading vs. following, coming with new ideas, etc. and shape the conditions accordingly
-			// can't introduce these synths until the array size is > 1!!
+			if(recent_silence > 0.85 and: {recent_amp <= -24} and: {recent_density < 4} and: {keyList.size <= maxVoices} and: {current_event == 0},{
+				var key = (silenceKey ++ playerIndex);
 
-			/*	if(recent_silence > 0.9 and: {recent_amp <= -24} and: {recent_density < 4} and: {keyList.size <= maxVoices} and: {current_event == 0},{
-			var key = (silenceKey ++ playerIndex);
-
-			if(Ndef(key.asSymbol).isPlaying.not,{
-			Ndef(key.asSymbol,~transforms["fillSilence"][silenceKey]).play(switcherBus,numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
-			// Ndef(key.asSymbol).set(\inBus,analyserIn);
-			current_event = key;
-			"% ON".format(key).postln;
-			})
+				if(Ndef(key.asSymbol).isPlaying.not,{
+					Ndef(key.asSymbol,~transforms["fillSilence"][silenceKey]).play(switcherBus,numChannels,fadeTime:fadeTime,group:~inGroup,addAction:\addToTail);
+					// Ndef(key.asSymbol).set(\inBus,analyserIn);
+					current_event = key;
+					"% ON".format(key).postln;
+				})
 			},{
-			var key = (silenceKey ++ playerIndex);
+				var key = (silenceKey ++ playerIndex);
 
-			if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).first > (memoryScale * minPhraseLength)},{
-			Ndef(key.asSymbol).end(fadeTime);
-			"% OFF".format(key).postln;
-			})
-			});*/
+				if(Ndef(key.asSymbol).isPlaying and: {~memory[playerIndex]["events"].indicesOfEqual(key).first > (memoryScale * minPhraseLength)},{
+					Ndef(key.asSymbol).end(fadeTime);
+					"% OFF".format(key).postln;
+				})
+			});
 
 			//"bufTransforms"
-			if(~recorder[playerIndex] > 0 and: {recent_amp <= -18} and: {recent_hasFreq > 0.3} and: {keyList.size <= maxVoices} and: {current_event == 0},{
+			if(~recorder[playerIndex] > 0 and: {recent_amp <= -18} and: {recent_silence > 0.5} and: {keyList.size <= maxVoices} and: {current_event == 0},{
 				var key = (bufferKey ++ playerIndex);
 
 				if(Ndef(key.asSymbol).isPlaying.not,{
@@ -191,17 +190,15 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 				})
 			});
 
-
 			//fix all this - it's soooo messy! Can't they be put in a Dictionary and controlled by Ndefs??
 			//  |
 			//  |
 			//  V
 
-
-			if(current_density <= 3 and: {recent_amp <= -28} and: (recent_hasFreq > 0.75) and: {current_time > (performanceLength/2)} and: {current_event == 0},{
+			if(current_density <= 3 and: {recent_amp <= -24} and: (recent_hasFreq > 0.75) and: {current_event == 0},{
 				{
 					2.do({
-						Synth(\snowSines,[\atk,4.0.rrand(6.0),\rls,8.0.rrand(10.0),\pan,1.0.rand2,\amp,0.02.rrand(0.03),\freq,~memory[playerIndex]["past_freq"][..memLength].asSet.choose,\outBus,switcherBus]);
+						Synth(\snowSines,[\atk,4.0.rrand(6.0),\rls,8.0.rrand(10.0),\pan,1.0.rand2,\amp,0.02.rrand(0.03),\freq,~memory[playerIndex]["past_freq"][..(memLength * 2)].asSet.choose,\outBus,switcherBus]);
 						current_event = "snowSines%".format(playerIndex);
 						"snowSines%".format(playerIndex).postln;
 						10.0.rrand(13.0).wait;
@@ -209,31 +206,39 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 				}.fork;
 			});
 
-
-			if(~memory[playerIndex]["past_amp"][..memLength].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {~memory[playerIndex]["past_density"][..memLength].maxItem <= 5} and: {current_time < (performanceLength/2)} and: {keyList.size <= maxVoices} and: {current_event == 0},{
+			if(~memory[playerIndex]["past_amp"][..memLength].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {keyList.size <= maxVoices} and: {current_event == 0},{
 				Synth(\freezeBells,[\inBus,analyserIn,\outBus,switcherBus],Ndef("input%".format(playerIndex).asSymbol).nodeID,\addAfter);
 				current_event = "freezeBells%".format(playerIndex);
 				"freezeBells%".format(playerIndex).postln;
 			});
 
-
-			// add a occurence limit here as well!
-
-			if(current_density >= 10 and: {current_centroid > 3000} and: {current_amp >= -18} and: {current_time < (performanceLength/2)} and: {keyList.size <= maxVoices} and: {current_event == 0},{
-				Synth(\screech,[\freq,1000,\amp,0.18.rrand(0.25),\pan,1.0.rand2,\outBus,switcherBus]);
-				current_event = "screech%".format(playerIndex);
-				"screech%".format(playerIndex).postln;
+			if(current_density >= 10 and: {current_centroid > 3000} and: {current_amp >= -18} and: {keyList.size <= maxVoices} and: {current_event == 0},{
+				if(~memory[playerIndex]["events"].indicesOfEqual("screech%".format(playerIndex)).isNil,{
+					Synth(\screech,[\freq,1000,\amp,0.18.rrand(0.25),\pan,1.0.rand2,\outBus,switcherBus]);
+					current_event = "screech%".format(playerIndex);
+					"screech%".format(playerIndex).postln;
+				},{
+					if(~memory[playerIndex]["events"].indicesOfEqual("screech%".format(playerIndex)).first > (memoryScale * 1.5),{
+						Synth(\screech,[\freq,1000,\amp,0.18.rrand(0.25),\pan,1.0.rand2,\outBus,switcherBus]);
+						current_event = "screech%".format(playerIndex);
+						"screech%".format(playerIndex).postln;
+					})
+				});
 			});
 
-
-			// these arguments are fucked, I think...
-
-			if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {current_time > (performanceLength * 0.75)} and: {keyList.size <= maxVoices} and: {current_event == 0},{
-				Synth(\clicks,[\ts,10.rrand(20),\freq,(recent_silence % 0.9 * 4.rrand(15)),\feedback,60,\amp,0.1,\outBus,switcherBus]);
-				current_event = "crawlers%".format(playerIndex);
-				"crawlers%".format(playerIndex).postln;
+			if(recent_centroid > 3000 and: {recent_meanIOI < 0.3} and: {recent_varianceIOI < 0.1} and: {keyList.size <= maxVoices} and: {current_event == 0},{
+				if(~memory[playerIndex]["events"].indicesOfEqual("crawlers%".format(playerIndex)).isNil,{
+					Synth(\clicks,[\ts,1.exprand(4.0),\freq,0.001.exprand(0.01),\feedback,60,\amp,0.06,\outBus,switcherBus]);
+					current_event = "crawlers%".format(playerIndex);
+					"crawlers%".format(playerIndex).postln;
+				},{
+					if(~memory[playerIndex]["events"].indicesOfEqual("crawlers%".format(playerIndex)).first > (memoryScale * 1.5),{
+						Synth(\clicks,[\ts,1.exprand(4.0),\freq,0.001.exprand(0.01),\feedback,60,\amp,0.06,\outBus,switcherBus]);
+						current_event = "crawlers%".format(playerIndex);
+						"crawlers%".format(playerIndex).postln;
+					})
+				});
 			});
-
 		}
 
 
@@ -321,7 +326,6 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//buffer recording
-
 
 		// this is a bad if statment!!! The logic doesn't really make sense - it should be nested inside another if statement...
 		// also - maybe the conditions should be around amp/silence/etc. instead of density/onsets? So as to also record long tones...
