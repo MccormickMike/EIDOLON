@@ -7,7 +7,7 @@
 ~players.add(
 
 	"Mascha" -> (
-		inBus: 0,
+		inBus: 1,
 		outBus: 0,
 
 		compThresh: 0.5, // compressor threshold between 0.0 and 1.0 for inputs

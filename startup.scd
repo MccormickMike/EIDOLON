@@ -10,7 +10,8 @@ options.memSize = 2**20;
 options.sampleRate = 44100;
 
 // Choose Device
-// options.device = "Scarlett 2i2 USB"
+// options.device = "Scarlett 2i2 USB";
+// options.device = "OCTA-CAPTURE";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

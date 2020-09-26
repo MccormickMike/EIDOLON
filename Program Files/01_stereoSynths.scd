@@ -259,7 +259,7 @@ SynthDef(\analyser, {
 
 SynthDef(\switcher,{
 	var in = In.ar(\inBus.kr,numChannels);
-	var sig = FreeVerb.ar(in,1,100,\damp.kr(0.5));
+	var sig = FreeVerb.ar(in,1,100,\damp.kr(0.7));
 	sig = HPF.ar(sig,250);
 	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
 	sig = XFade2.ar(in,sig,\mix.kr(0.05) * 2 - 1);
@@ -301,7 +301,7 @@ SynthDef(\recorder,{
 
 SynthDef(\reverb,{
 	var sig = In.ar(\inBus.kr,1);
-	sig = FreeVerb.ar(sig,1,100,\damp.kr(0.4));
+	sig = FreeVerb.ar(sig,1,100,\damp.kr(0.7));
 	sig = HPF.ar(sig,250);
 	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
 	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr(0.8));
