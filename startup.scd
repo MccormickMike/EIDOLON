@@ -51,5 +51,3 @@ Server.default.record(numChannels: ~config[\numChannels]);
 
 ~play.value;
 ~stop.value
-
-Ndef(\analyser0).inspect

@@ -153,7 +153,7 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 
 			//"fillSilence"       // change this definition -> something about leading vs. following, coming with new ideas, etc. and shape the conditions accordingly
 
-			if(recent_silence > 0.85 and: {recent_amp <= -24} and: {recent_density < 4} and: {keyList.size <= maxVoices} and: {current_event == 0},{
+			if(recent_silence > 0.88 and: {recent_amp <= -24} and: {recent_density < 4} and: {keyList.size <= maxVoices} and: {current_event == 0},{
 				var key = (silenceKey ++ playerIndex);
 
 				if(Ndef(key.asSymbol).isPlaying.not,{
