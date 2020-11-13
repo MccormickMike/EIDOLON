@@ -26,8 +26,7 @@ server.waitForBoot({
 	"config.scd".loadRelative;
 
 	// load program files
-	PathName(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program Files/").entries.do({
-		arg entry,index;
+	PathName(PathName(thisProcess.nowExecutingPath).parentPath +/+ "Program Files/").entries.do({ |entry,index|
 		var stereo = ~config[\numChannels] < 3;
 
 		switch(index,

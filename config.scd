@@ -28,8 +28,7 @@
 
 ~players = Dictionary();
 
-~config[\playerProfiles].do({  	// load player profiles, eventually a drag and drop thing in a GUI?
-	arg string;
+~config[\playerProfiles].do({ |string|  	              // load player profiles, eventually a drag and drop thing in a GUI?
 	var path = PathName(thisProcess.nowExecutingPath).parentPath +/+ "PlayerProfiles/" ++ string ++ ".scd";
 
 	path.load;

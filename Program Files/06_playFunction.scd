@@ -8,8 +8,7 @@ var players = ~config[\playerProfiles];
 var numChannels = ~config[\numChannels];
 var wait = ~config[\waitBeforeStartTime];
 
-players.do({
-	arg profileName,playerIndex;
+players.do({ |profileName,playerIndex|
 	var profile = ~players[profileName];
 
 	Ndef("input%".format(playerIndex).asSymbol,\inPlayer).play(group:~inGroup);
@@ -34,8 +33,7 @@ players.do({
 
 
 ~play = {
-	players.do({
-		arg profileName,playerIndex;
+	players.do({ |profileName,playerIndex|
 		var profile = ~players[profileName];
 
 		// Ndef("input%".format(playerIndex).asSymbol,\inPlayer).play(group:~inGroup);

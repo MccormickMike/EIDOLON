@@ -3,8 +3,7 @@
 var memoryScale = ~config[\pollRateGlobal]; // this probably needs to change at some point as well...
 var memLength = memoryScale * 6; // 6 seconds
 
-OSCdef(\globalListener, {
-	arg msg;
+OSCdef(\globalListener, { |msg|
 	var current_amp = msg[3].ampdb;
 	var recent_amp = ~globalMemory["past_amp"][..memLength].median;
 	var current_silence = msg[4];
@@ -45,7 +44,7 @@ OSCdef(\globalListener, {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-	// can this be rewritten into an iteration/.do statement?
+	// can this be rewritten into an iteration /.do statement?
 
 	~globalMemory["past_amp"] = ~globalMemory["past_amp"].addFirst(current_amp);
 	~globalMemory["past_silence"] = ~globalMemory["past_silence"].addFirst(current_silence);

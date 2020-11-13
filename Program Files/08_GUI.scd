@@ -125,7 +125,6 @@ so they can be saved/recalled from other places during performance?
 
 */
 
-
 EZSlider(
 	parent: window,
 	bounds: 250@40,

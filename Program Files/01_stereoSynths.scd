@@ -219,8 +219,8 @@ SynthDef(\inPlayer,{
 	sig = BLowShelf.ar(sig,\filtFreqLo.kr(80),\rsLo.kr(0.25),0);
 	sig = Compander.ar(sig,sig,\compThresh.kr(0.5),1,0.5,0.01,0.01);
 	Out.ar(\analyserOut.kr,sig);
-	sig = Pan2.ar(sig,\pan.kr(0));
-	Out.ar(\outBus.kr,sig * \amp.kr(1));
+	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr(1));
+	Out.ar(\outBus.kr,sig);
 
 }).add;
 

@@ -19,5 +19,5 @@ OSCdef(\onsetReceiver,{
 
 },'/onsetReply');
 
-
+"Calibration OSCdefs loaded".postln;
 )

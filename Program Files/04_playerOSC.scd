@@ -10,8 +10,7 @@ var numChannels = ~config[\numChannels];
 var numPlayers = ~config[\numPlayers];
 var switcherBus = ~audioBus["switcherBus"];
 
-players.do({
-	arg profileName,playerIndex;
+players.do({ |profileName,playerIndex|
 	var verbose = true;
 	var analyserIn = ~audioBus["analyserIn"][playerIndex];
 
@@ -20,8 +19,7 @@ players.do({
 	var memoryScale = ~players.asArray[playerIndex][\pollRate]; // this probably needs to change at some point as well...
 	var memLength = memoryScale * 4; // 6 seconds
 
-	OSCdef("listener%".format(playerIndex).asSymbol, {
-		arg msg;
+	OSCdef("listener%".format(playerIndex).asSymbol, { |msg|
 		var current_amp = msg[3].ampdb;
 		var recent_amp = ~memory[playerIndex]["past_amp"][..memLength].median;
 		var current_silence = msg[4];
@@ -102,10 +100,8 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//transforms
 
-		~transforms.values.collect({
-			arg subDicts;
-			subDicts.keysDo({
-				arg subDictKey;
+		~transforms.values.collect({ |subDicts|
+			subDicts.keysDo({ |subDictKey|
 				if(Ndef((subDictKey ++ playerIndex).asSymbol).isPlaying,{keyList.add(subDictKey)})
 			})
 		});
@@ -245,15 +241,13 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 		//{state == "contrast"}{} //gotta figure this out!
 
 
-		{state == "ignore"}
+		{state == "ignore"} // ignore state is, for now, monophonic - this needs to change!! Could use .coin to trigger things? Based on analysis, or just time?
 		{
 			case
 			{(~memory[playerIndex]["state"].indicesOfEqual("ignore") ? 0).asArray.last % (memoryScale * 60 * 3) == 1} //after 3 minutes(?) it should be silent for a bit?
 			{
-				~transforms.values.collect({
-					arg subDicts;
-					subDicts.keysDo({
-						arg subDictKey;
+				~transforms.values.collect({ |subDicts|
+					subDicts.keysDo({ |subDictKey|
 						if(Ndef((subDictKey ++ playerIndex).asSymbol).isPlaying,{Ndef((subDictKey ++ playerIndex).asSymbol).end(fadeTime)})
 					})
 				});
@@ -264,10 +258,8 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 				var key = ~transforms[dict].keys.choose;
 				var playerKey = (key ++ playerIndex);
 
-				~transforms.values.collect({
-					arg subDicts;
-					subDicts.keysDo({
-						arg subDictKey;
+				~transforms.values.collect({ |subDicts|
+					subDicts.keysDo({ |subDictKey|
 						if(Ndef((subDictKey ++ playerIndex).asSymbol).isPlaying,{
 							Ndef((subDictKey ++ playerIndex).asSymbol).end(fadeTime);
 							"% OFF".format(subDictKey ++ playerIndex).postln;
@@ -299,10 +291,9 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 			// otherwise don't do anything and save some CPU
 
 			if((~memory[playerIndex]["state"].indicesOfEqual("tacet").asArray.at(memoryScale) ? 0) == memoryScale,{
-				~transforms.values.collect({
-					arg subDicts;
-					subDicts.keysDo({
-						arg subDictKey;
+
+				~transforms.values.collect({ |subDicts|
+					subDicts.keysDo({ |subDictKey|
 						if(Ndef((subDictKey ++ playerIndex).asSymbol).isPlaying,{
 							Ndef((subDictKey ++ playerIndex).asSymbol).end(fadeTime);
 							"% OFF".format(subDictKey ++ playerIndex).postln;
@@ -310,8 +301,7 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 					})
 				});
 
-				~bufTransforms.keysDo({
-					arg key;
+				~bufTransforms.keysDo({ |key|
 
 					if(Ndef((key ++ playerIndex).asSymbol).isPlaying,{
 						Ndef((key ++ playerIndex).asSymbol).end(fadeTime);
@@ -354,8 +344,7 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 
 		// this cycles based on time...should it also be based on number of occurences?
 		(
-			~synthKeys[playerIndex].keysDo({
-				arg key;
+			~synthKeys[playerIndex].keysDo({ |key|
 				var synthKey = (~synthKeys[playerIndex][key].first ++ playerIndex);
 
 				if(Ndef(synthKey.asSymbol).isPlaying.not and: {(~memory[playerIndex]["events"].indicesOfEqual(synthKey) ? 0).asArray.last > (memoryScale * (performanceLength/5))},{
