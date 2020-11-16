@@ -15,8 +15,11 @@
 		\compThreshGlobal -> 0.5, // compressor threshold between 0.0 and 1.0 for ouput
 		\onsetThreshGlobal -> 0.5,
 		\silenceThreshold -> 0.01,
+
 		\globalDamp -> 0.5, // between 0.0 and 1.0; high frequency dampening
 		\globalMix -> 0.02, // between 0.0 and 1.0; wet/dry reverb mix
+		\lpfFreqGlobal -> 2000,
+		\hpfFreqGlobal -> 450,
 
 		\pollRateGlobal -> 4,
 		\hardwareOut -> 0,

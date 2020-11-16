@@ -4,7 +4,7 @@
 
 (
 var players = ~config[\playerProfiles];
-var waitBeforeStartTime = ~config[\waitBeforeStartTime].clip(1,inf);
+var waitBeforeStartTime = ~config[\waitBeforeStartTime].clip(1,inf).asInteger;
 var performanceLength = ~config[\performanceLength];
 var numChannels = ~config[\numChannels];
 var numPlayers = ~config[\numPlayers];
@@ -20,7 +20,7 @@ players.do({ |profileName,playerIndex|
 	var memLength = memoryScale * 4; // 6 seconds
 
 	OSCdef("listener%".format(playerIndex).asSymbol, { |msg|
-		var current_amp = msg[3].ampdb;
+		var current_amp = msg[3].ampdb;                                                                           //here
 		var recent_amp = ~memory[playerIndex]["past_amp"][..memLength].median;
 		var current_silence = msg[4];
 		var recent_silence = ~memory[playerIndex]["past_silence"][..memLength].mean;
@@ -60,9 +60,9 @@ players.do({ |profileName,playerIndex|
 		case
 		{current_time < waitBeforeStartTime}{state = "tacet"} // tacet
 		// {current_time > waitBeforeStartTime}{state = "support"} // just for testing....
-		{current_time > waitBeforeStartTime and: {current_time < (performanceLength + waitBeforeStartTime)}}
+		{current_time >= waitBeforeStartTime and: {current_time < (performanceLength + waitBeforeStartTime)}}
 		{
-			if((current_time - waitBeforeStartTime) < (performanceLength * 0.08),{ // relative to performanceLength?
+			if((current_time - waitBeforeStartTime) < (performanceLength * 0.08),{  // relative to performanceLength?
 				state = "ignore";
 			},{
 				if(~memory[playerIndex]["state"].indicesOfEqual(~memory[playerIndex]["state"].first).last % (memoryScale * performanceLength * 0.1) == 0,{ // minimum state length: related to performanceLength or fixed?
@@ -76,7 +76,7 @@ players.do({ |profileName,playerIndex|
 				});
 			});
 		}
-		{current_time >= performanceLength}{state = "tacet"}; // this could also call some other fucntion that neatly wraps up the performance?
+		{current_time >= (performanceLength + waitBeforeStartTime)}{state = "tacet"}; // this could also call some other fucntion that neatly wraps up the performance?
 
 		if(verbose,{
 			"\rPLAYER: %

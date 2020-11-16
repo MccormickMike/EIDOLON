@@ -19,6 +19,8 @@
 		inVolume: 0.9, // between 0.0 and 1.0; volume for clean thru signal
 		damp: 0.4, // between 0.0 and 1.0; high frequency dampening
 		verbAmp: 0.4, // between 0.0 and 1.0; reverb volume
+		lpfFreq: 2000, // between 0.0 and 1.0; low-pass filter cutoff frequency scaled between 40-16000 Hz
+		hpfFreq: 450, // between 0.0 and 1.0; high-pass filter cutoff frequency scaled between 40-16000 Hz
 
 		// EQ stuff??
 

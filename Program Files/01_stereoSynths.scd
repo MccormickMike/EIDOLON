@@ -259,10 +259,13 @@ SynthDef(\analyser, {
 
 SynthDef(\switcher,{
 	var in = In.ar(\inBus.kr,numChannels);
-	var sig = FreeVerb.ar(in,1,100,\damp.kr(0.7));
-	sig = HPF.ar(sig,250);
-	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
-	sig = XFade2.ar(in,sig,\mix.kr(0.05) * 2 - 1);
+	var sig = FreeVerb.ar(HPF.ar(in,250),1,0.9,\damp.kr(0.7));
+
+	sig = LPF.ar(sig,\lpfFreq.kr().clip(20,20000));
+	sig = HPF.ar(sig,\hpfFreq.kr().clip(20,20000));
+
+	sig = in + (sig * \mix.kr(0.1));
+
 	Out.ar(\outBus.kr,sig);
 }).add;
 
@@ -301,10 +304,13 @@ SynthDef(\recorder,{
 
 SynthDef(\reverb,{
 	var sig = In.ar(\inBus.kr,1);
-	sig = FreeVerb.ar(sig,1,100,\damp.kr(0.7));
-	sig = HPF.ar(sig,250);
-	sig = BHiShelf.ar(sig,2250,1,-6); // could eventually allow this to be tuned in a GUI...
-	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr(0.8));
+	sig = HPF.ar(sig,350);
+	sig = FreeVerb.ar(sig,1,0.9,\damp.kr(0.7));
+
+	sig = LPF.ar(sig,\lpfFreq.kr().clip(20,20000));
+	sig = HPF.ar(sig,\hpfFreq.kr().clip(20,20000));
+
+	sig = Pan2.ar(sig,\pan.kr(0),\amp.kr(0.8) / 2); // amp scaling because this reverb is ridiculous....
 	Out.ar(\outBus.kr,sig);
 
 }).add;
