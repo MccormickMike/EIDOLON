@@ -5,7 +5,7 @@ var server = Server.default;
 var options = server.options;
 
 options.numInputBusChannels = 2;
-options.numOutputBusChannels = 8;
+options.numOutputBusChannels = 2;
 options.memSize = 2**20;
 options.sampleRate = 44100;
 
@@ -50,3 +50,6 @@ Server.default.record(numChannels: ~config[\numChannels]);
 
 ~play.value;
 ~stop.value
+
+
+Server.default.options.device
