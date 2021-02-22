@@ -308,4 +308,4 @@ SynthDef(\clicks,{
 "multichannel transforms loaded".postln;
 
 );
-
+);

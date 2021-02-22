@@ -20,7 +20,7 @@ players.do({ |profileName,playerIndex|
 	var memLength = memoryScale * 4; // 6 seconds
 
 	OSCdef("listener%".format(playerIndex).asSymbol, { |msg|
-		var current_amp = msg[3].ampdb;                                                                           //here
+		var current_amp = msg[3].ampdb;                                                                           // change here
 		var recent_amp = ~memory[playerIndex]["past_amp"][..memLength].median;
 		var current_silence = msg[4];
 		var recent_silence = ~memory[playerIndex]["past_silence"][..memLength].mean;
@@ -106,8 +106,8 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 			})
 		});
 
-		case               // need to double check this...case will go through each statement in order, prioritizing the first entries, no? Should it be a switch?
-		{state == "support"}    // can these each be turned into a function with some args passed in? (conditions, transform key, etc.)
+		case                  // need to double check this...case will go through each statement in order, prioritizing the first entries, no? Should it be a switch?
+		{state == "support"}  // can these each be turned into a function with some args passed in? (conditions, transform key, etc.)
 		{
 			//"densePerc"
 			if(recent_hasFreq <= 0.3 and: {recent_density >= 7} and: {recent_silence <= 0.35} and: {recent_centroid >= 1500} and: {keyList.size <= maxVoices} and: {current_event == 0},{
@@ -203,7 +203,7 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 			});
 
 			if(~memory[playerIndex]["past_amp"][..memLength].maxItem >= -25 and: {current_hasFreq == 1} and: {recent_specFlatness > 0.1} and: {keyList.size <= maxVoices} and: {current_event == 0},{
-				Synth(\freezeBells,[\inBus,analyserIn,\outBus,switcherBus],Ndef("input%".format(playerIndex).asSymbol).nodeID,\addAfter);
+				Synth(\freezeBells,[\inBus,analyserIn,\outBus,switcherBus], Ndef("input%".format(playerIndex).asSymbol).nodeID,\addAfter);
 				current_event = "freezeBells%".format(playerIndex);
 				"freezeBells%".format(playerIndex).postln;
 			});
@@ -239,7 +239,6 @@ current_specFlatness: % \rrecent_specFlatness: % \rcurrent_density: % \rrecent_d
 
 
 		//{state == "contrast"}{} //gotta figure this out!
-
 
 		{state == "ignore"} // ignore state is, for now, monophonic - this needs to change!! Could use .coin to trigger things? Based on analysis, or just time?
 		{

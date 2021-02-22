@@ -25,7 +25,6 @@
 		\hardwareOut -> 0,
 
 		\playerProfiles -> ["Mascha"],
-
 	]
 );
 
