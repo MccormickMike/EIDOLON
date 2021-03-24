@@ -45,6 +45,9 @@ server.waitForBoot({
 
 );
 
+Environment
+
+
 // evaluate the following line to record the performance
 Server.default.record(numChannels: ~config[\numChannels]);
 
